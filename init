@@ -1,0 +1,26 @@
+#! /bin/bash
+
+source contrail.conf
+
+init_controller()
+{
+    contrail-provision-control --host_name $(hostname) --host_ip $host_ip --router_asn 64512 --api_server_ip $host_ip --api_server_port 8082 --oper add --admin_user admin --admin_password password --admin_tenant_name admin
+}
+
+init_vrouter()
+{
+    contrail-provision-vrouter --host_name $(hostname) --host_ip $host_ip --api_server_ip $controller_ip --oper add
+}
+
+if [[ $1 == "controller" ]]
+then
+    host_ip=$controller_ip
+    init_controller
+elif [[ $1 == "vrouter" ]]
+then
+    host_ip=$vrouter_ip
+    init_vrouter
+else
+    echo "Usage: $0 controller | vrouter"
+fi
+
