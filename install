@@ -1,0 +1,141 @@
+#! /bin/bash
+
+source contrail.conf
+
+apt_get_install()
+{
+    DEBIAN_FRONTEND=noninteractive sudo apt-get -y --force-yes --allow-unauthenticated install $1
+}
+
+build_install_source()
+{
+    sudo apt-add-repository -y 'ppa:opencontrail/ppa'
+    sudo apt-add-repository -y 'ppa:opencontrail/r2.20'
+    sudo apt-add-repository -y 'deb http://debian.datastax.com/community stable main'
+    curl -sL http://debian.datastax.com/debian/repo_key | sudo apt-key add -
+    sudo apt-get update
+}
+
+install_cassandra()
+{
+    echo "Installing Cassandra..."
+
+    apt_get_install "openjdk-7-jre"
+    apt_get_install "cassandra"
+
+    file=/etc/cassandra/cassandra.yaml
+    sed -i -e "s/^start_rpc.*/start_rpc: true/" \
+           -e "s/^rpc_address.*/rpc_address: $host_ip/" \
+           -e "s/^listen_address.*/listen_address: $host_ip/" \
+           -e "s/seeds:.*/seeds: \"$host_ip\"/" \
+           $file
+    service cassandra restart
+
+    echo "Done."
+}
+
+install_rabbitmq()
+{
+    echo "Installing RabbitMQ..."
+
+    apt_get_install "rabbitmq-server"
+
+    conf=/etc/rabbitmq/rabbitmq-env.conf
+    echo "RABBITMQ_NODENAME=rabbit@$(hostname)" > $conf
+    service rabbitmq-server restart
+
+    echo "Done."
+}
+
+install_zookeeper()
+{
+    echo "Installing Zookeeper..."
+
+    apt_get_install "zookeeper"
+
+    echo "0" > /etc/zookeeper/conf/myid
+
+    cat << __EOT__ >> /etc/zookeeper/conf/zoo.cfg
+maxSessionTimeout=120000
+autopurge.purgeInterval=3
+server.0=$host_ip:2888:3888
+group.0=0
+weight.0=1
+__EOT__
+
+    file=etc/init/zookeeper.conf
+    cp template/$file /$file
+    service zookeeper restart
+
+    echo "Done."
+}
+
+install_ifmap()
+{
+    echo "Installing IF-MAP server..."
+
+    mkdir -p /etc/contrail
+    apt_get_install "ifmap-server"
+
+    conf=/etc/ifmap-server/basicauthusers.properties
+    echo "control-node:control-node" >> $conf
+    echo "control-dns:control-dns" >> $conf
+
+    # ifmap-server will be managed by supervisor.
+    service ifmap-server stop
+    echo manual > /etc/init/ifmap-server.override
+
+    echo "Done."
+}
+
+install_controller()
+{
+    apt_get_install "software-properties-common curl"
+    build_install_source
+    install_cassandra
+    install_rabbitmq
+    install_zookeeper
+    install_ifmap
+
+    echo "Installing controller..."
+
+    apt_get_install "contrail-config contrail-utils"
+    apt_get_install "contrail-analytics"
+    apt_get_install "contrail-web-controller nodejs=0.8.15-1contrail1"
+    apt_get_install "contrail-control"
+
+    cat << __EOT__ > /etc/contrail/debs_list.txt
+contrail-config
+contrail-analytics
+contrail-control
+contrail-web-controller
+contrail-nodemgr
+contrail-utils
+__EOT__
+
+    echo "Done."
+}
+
+install_vrouter()
+{
+    echo "Install vRouter..."
+
+    apt_get_install "software-properties-common curl"
+    build_install_source
+    apt_get_install "contrail-vrouter-dkms contrail-utils"
+
+    echo "Done."
+}
+
+if [[ $1 == "controller" ]]
+then
+    host_ip=$controller_ip
+    install_controller
+elif [[ $1 == "vrouter" ]]
+then
+    host_ip=$vrouter_ip
+    install_vrouter
+else
+    echo "Usage: $0 controller | vrouter"
+fi
+
