@@ -1,0 +1,95 @@
+#! /bin/bash
+
+source contrail.conf
+
+render_file()
+{
+    for file in $1
+    do
+      sudo sed \
+        -e "s/__host_ip__/$host_ip/g" \
+        -e "s/__prefix_len__/$prefix_len/g" \
+        -e "s/__gateway__/$gateway/g" \
+        -e "s/__nic__/$nic/g" \
+        -e "s/__discovery__/$controller_ip/g" \
+        template/etc/contrail/$file > /etc/contrail/$file
+    done
+}
+
+configure_controller()
+{
+    sed -i "s/bind 127.0.0.1/#bind 127.0.0.1/" /etc/redis/redis.conf
+    service redis-server restart
+
+    render_file "
+        contrail-api.conf
+        contrail-schema.conf
+        contrail-discovery.conf
+        contrail-analytics-api.conf
+        contrail-collector.conf
+        contrail-query-engine.conf
+        contrail-control.conf
+        contrail-dns.conf
+        contrail-config-nodemgr.conf
+        contrail-analytics-nodemgr.conf
+        contrail-control-nodemgr.conf"
+
+    file_list="
+        config.global.js
+        supervisord_config.conf
+        supervisord_config_files
+        supervisord_analytics.conf
+        supervisord_analytics_files
+        supervisord_control.conf
+        supervisord_control_files"
+    for f in $file_list
+    do
+        cp -r template/etc/contrail/$f /etc/contrail/
+    done
+
+    conf=etc/init/supervisor-webui.conf
+    cp template/$conf /$conf
+
+    service supervisor-config restart
+    service supervisor-analytics restart
+    service supervisor-control restart
+    service contrail-webui-webserver restart
+    service contrail-webui-jobserver restart
+}
+
+configure_vrouter()
+{
+    render_file "
+        contrail-vrouter-agent.conf
+        contrail-vrouter-nodemgr.conf
+        vrouter_nodemgr_param
+        agent_param"
+
+    file_list="
+        if-vhost0
+        supervisord_vrouter.conf
+        supervisord_vrouter_files"
+    for f in $file_list
+    do
+        cp -r template/etc/contrail/$f /etc/contrail/
+    done
+
+    sudo cat /sys/class/net/$nic/address > /etc/contrail/default_pmac
+    echo "contrail-vrouter-agent" > /etc/contrail/debs_list.txt
+
+    # Update /etc/network/interface with vhost0
+    # ifdown $__nic__ && ifup $__nic__ vhost0 && service supervisor-vrouter restart
+}
+
+if [[ $1 == "controller" ]]
+then
+    host_ip=$controller_ip
+    configure_controller
+elif [[ $1 == "vrouter" ]]
+then
+    host_ip=$vrouter_ip
+    configure_vrouter
+else
+    echo "Usage: $0 controller | vrouter"
+fi
+
