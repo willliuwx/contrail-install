@@ -1,0 +1,28 @@
+#!/usr/bin/python
+
+import setup
+setup.pre_install()
+
+from charmhelpers.core import hookenv
+from charmhelpers.fetch import (
+    configure_sources,
+    apt_upgrade,
+    apt_install,
+)
+
+PACKAGES = [ "contrail-web-controller", "nodejs=0.8.15-1contrail1",
+        "supervisor" ]
+
+def install():
+    hookenv.log('Installing contrail-webui')
+
+    configure_sources(True, "install-sources", "install-keys")
+    apt_upgrade(fatal=True, dist=True)
+    apt_install(PACKAGES, fatal=True,
+            options = ['--option=Dpkg::Options::=--force-confold', '--force-yes'])
+    setup.fix_permissions()
+    setup.fix_supervisor()
+
+if __name__ == "__main__":
+    install()
+

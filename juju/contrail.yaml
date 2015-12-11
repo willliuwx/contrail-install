@@ -1,0 +1,168 @@
+openstack:
+  services:
+    mysql:
+      charm: cs:trusty/mysql
+      constraints: mem=1G
+      to: 1/lxc/0
+      options:
+        dataset-size: 50%
+    rabbitmq-server:
+      charm: cs:trusty/rabbitmq-server
+      constraints: mem=1G
+      to: 1/lxc/1
+    keystone:
+      charm: cs:trusty/keystone
+      constraints: mem=1G
+      to: 1/lxc/2
+      options:
+        admin-password: contrail123
+    openstack-dashboard:
+      charm: cs:trusty/openstack-dashboard
+      constraints: mem=1G
+      to: 1/lxc/3
+    nova-cloud-controller:
+      charm: cs:trusty/nova-cloud-controller
+      constraints: mem=1G
+      to: 1/lxc/4
+      options:
+        network-manager: Neutron
+    glance:
+      charm: cs:trusty/glance
+      constraints: mem=1G
+      to: 1/lxc/5
+    neutron-api:
+      branch: cs:trusty/neutron-api
+      constraints: mem=1G
+      to: 1/lxc/6
+      options:
+        manage-neutron-plugin-legacy-mode: false
+    nova-compute:
+      charm: cs:trusty/nova-compute
+      constraints: mem=4G root-disk=20G
+      to: 2
+      options:
+        manage-neutron-plugin-legacy-mode: false
+  relations:
+    - [ keystone, mysql ]
+    - [ glance, mysql ]
+    - [ glance, keystone ]
+    - [ openstack-dashboard, keystone ]
+    - [ nova-cloud-controller, mysql ]
+    - [ nova-cloud-controller, rabbitmq-server ]
+    - [ nova-cloud-controller, glance ]
+    - [ nova-cloud-controller, keystone ]
+    - [ neutron-api, mysql ]
+    - [ neutron-api, rabbitmq-server ]
+    - [ neutron-api, nova-cloud-controller ]
+    - [ neutron-api, keystone ]
+    - [ "nova-compute:shared-db", "mysql:shared-db" ]
+    - [ "nova-compute:amqp", "rabbitmq-server:amqp" ]
+    - [ nova-compute, nova-cloud-controller ]
+    - [ nova-compute, glance ]
+
+contrail:
+  inherits: openstack
+  services:
+    cassandra:
+      branch: lp:~stub/charms/trusty/cassandra/noauthentication
+      constraints: mem=8G root-disk=20G
+      to: lxc:2
+      options:
+        authenticator: AllowAllAuthenticator
+    zookeeper:
+      charm: cs:trusty/zookeeper
+      constraints: mem=1G
+      to: 2/lxc/0
+    contrail-configuration:
+      charm: local:trusty/contrail-configuration
+      constraints: mem=4G
+      to: 2/lxc/1
+    contrail-control:
+      charm: local:trusty/contrail-control
+      constraints: mem=2G
+      to: 2/lxc/2
+    contrail-analytics:
+      charm: local:trusty/contrail-analytics
+      constraints: mem=4G
+      to: 2/lxc/3
+    contrail-webui:
+      charm: local:trusty/contrail-webui
+      constraints: mem=1G
+      to: 2/lxc/4
+    neutron-api-contrail:
+      charm: local:trusty/neutron-api-contrail
+    neutron-contrail:
+      charm: local:trusty/neutron-contrail
+  overrides:
+    admin-role: admin
+  relations:
+    - [ "contrail-configuration:cassandra", "cassandra:database" ]
+    - [ contrail-configuration, zookeeper ]
+    - [ contrail-configuration, rabbitmq-server ]
+    - [ contrail-configuration, keystone ]
+    - [ "contrail-analytics:cassandra", "cassandra:database" ]
+    - [ contrail-analytics, contrail-configuration ]
+    - [ "contrail-control:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "contrail-control:contrail-ifmap", "contrail-configuration:contrail-ifmap" ]
+    - [ "contrail-control:contrail-api", "contrail-configuration:contrail-api" ]
+    - [ contrail-control, keystone ]
+    - [ neutron-api-contrail, neutron-api ]
+    - [ neutron-api-contrail, contrail-configuration ]
+    - [ neutron-api-contrail, keystone ]
+    - [ contrail-webui, keystone ]
+    - [ "contrail-webui:contrail_api", "contrail-configuration:contrail-api" ]
+    - [ "contrail-webui:contrail_discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "contrail-webui:cassandra", "cassandra:database" ]
+    - [ neutron-contrail, nova-compute ]
+    - [ neutron-contrail, keystone ]
+    - [ "neutron-contrail:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "neutron-contrail:contrail-api", "contrail-configuration:contrail-api" ]
+
+openstack-kilo:
+  inherits: openstack
+  series: trusty
+  overrides:
+    openstack-origin: cloud:trusty-kilo
+
+opencontrail-icehouse:
+  inherits: contrail
+  series: trusty
+
+opencontrail-juno:
+  inherits: contrail
+  series: trusty
+  overrides:
+    openstack-origin: cloud:trusty-juno
+
+opencontrail-kilo:
+  inherits: contrail
+  series: trusty
+  overrides:
+    openstack-origin: cloud:trusty-kilo
+
+juniper-contrail:
+  inherits: contrail
+  series: trusty
+  overrides:
+    ####
+    # openstack-origin: cloud:trusty-icehouse
+    # install-sources: "deb http://10.84.29.100/contrail-2.20-64-icehouse/repo /"
+    # install-keys: "http://10.84.29.100/contrail-2.20-64-icehouse/repo/key"
+    ####
+    # openstack-origin: cloud:trusty-kilo
+    # install-sources: "deb http://10.84.29.100/contrail-3.0-2652-kilo/repo /"
+    # install-keys: "http://10.84.29.100/contrail-3.0-2652-kilo/repo/key"
+
+test:
+  series: trusty
+  services:
+    #contrail-webui:
+    #  charm: local:trusty/contrail-webui
+    #  to: 1/lxc/15
+    #haproxy:
+    #  charm: cs:trusty/haproxy
+    #  to: 1/lxc/16
+    haproxy:
+      charm: cs:trusty/haproxy
+      to: 2
+

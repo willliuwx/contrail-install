@@ -1,0 +1,56 @@
+mysql:
+  dataset-size: 50%
+
+keystone:
+  openstack-origin: cloud:trusty-juno
+  admin-role: admin
+  admin-password: contrail123
+
+openstack-dashboard:
+  openstack-origin: cloud:trusty-juno
+
+nova-cloud-controller:
+  openstack-origin: cloud:trusty-juno
+  network-manager: Neutron
+
+glance:
+  openstack-origin: cloud:trusty-juno
+
+neutron-api:
+  openstack-origin: cloud:trusty-juno
+  manage-neutron-plugin-legacy-mode: false
+
+nova-compute:
+  openstack-origin: cloud:trusty-juno
+  manage-neutron-plugin-legacy-mode: false
+
+cassandra:
+  authenticator: AllowAllAuthenticator
+
+haproxy:
+  peering_mode: active-active
+
+contrail-configuration:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
+contrail-analytics:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
+contrail-control:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
+contrail-webui:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
+neutron-api-contrail:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
+neutron-contrail:
+  install-sources: "deb http://10.84.29.100/contrail-2.21-102-juno/repo /"
+  install-keys: "http://10.84.29.100/contrail-2.21-102-juno/repo/key"
+
