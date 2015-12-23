@@ -6,6 +6,8 @@ from charmhelpers.core import hookenv
 from charmhelpers.core import services
 from charmhelpers.core import templating
 
+from setup import is_opencontrail
+
 CONFIG_FILE = os.path.join(os.sep, 'etc', 'contrail', 'config.global.js')
 
 
@@ -45,6 +47,14 @@ class ContrailWebUIConfig(services.ManagerCallback):
         context = {
             'config': hookenv.config()
         }
+
+        base = '/var/lib/contrail-webui' \
+               if is_opencontrail() \
+               else '/usr/src/contrail'
+        context['webcontroller_path'] = base + '/contrail-web-controller'
+        context['logo_file'] = base + '/contrail-web-core/webroot/img/opencontrail-logo.png'
+        context['favicon_file'] = base + '/contrail-web-core/webroot/img/opencontrail-favicon.ico'
+
         context.update(ContrailAPIRelation())
         context.update(ContrailDiscoveryRelation())
         context.update(CassandraRelation())
@@ -128,7 +138,7 @@ def manage():
 
     manager = services.ServiceManager([
         {
-            'service': 'contrail-webui-webserver',
+            'service': 'supervisor-webui',
             'ports': (config['port'],),
             'required_data': [
                 config,
@@ -145,20 +155,6 @@ def manage():
             'data_lost': [
                 website_callback,
             ]
-        },
-        {
-            'service': 'contrail-webui-jobserver',
-            'required_data': [
-                config,
-                cassandra,
-                contrail_api,
-                contrail_discovery,
-                keystone,
-            ],
-            'data_ready': [
-                actions.log_start,
-                config_callback,
-            ],
         },
     ])
     manager.manage()

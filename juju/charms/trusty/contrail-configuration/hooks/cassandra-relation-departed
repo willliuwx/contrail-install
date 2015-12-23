@@ -4,6 +4,7 @@ from socket import gethostbyname
 import sys
 
 import json
+import urllib2
 import yaml
 
 from charmhelpers.contrib.openstack.utils import configure_installation_source
@@ -46,9 +47,6 @@ from contrail_configuration_utils import (
     contrail_floating_ip_delete,
     contrail_floating_ip_use,
     discovery_port,
-    fix_ifmap,
-    fix_nodemgr,
-    fix_permissions,
     fix_services,
     provision_metadata,
     units,
@@ -76,8 +74,16 @@ def add_contrail_api():
        and config_get("identity-admin-ready") \
        and config_get("zookeeper-ready"):
         api_p = api_port()
-        # wait until api is up
-        check_url("http://localhost:" + str(api_p))
+        port = str(api_p)
+        try:
+            # wait until api is up
+            check_url("http://localhost:" + port)
+        except urllib2.URLError:
+            log("contrail-api service has failed to start correctly on port {}".format(port),
+                "CRITICAL")
+            log("This is typically due to a runtime error in related services",
+                "CRITICAL")
+            raise
         config["contrail-api-configured"] = True
 
         # inform relations
@@ -234,7 +240,7 @@ def contrail_ifmap_joined():
         cs[unit] = { "username": unit, "password": pwgen(32) }
         leader_set({"ifmap-creds": json.dumps(creds)})
         write_ifmap_config()
-        service_restart("ifmap-server")
+        service_restart("supervisor-config")
         relation_set(creds=json.dumps(cs))
 
 def floating_ip_pool_create(name, projects):
@@ -322,15 +328,12 @@ def install():
     configure_sources(True, "install-sources", "install-keys")
     apt_upgrade(fatal=True, dist=True)
     apt_install(PACKAGES, fatal=True)
-    fix_permissions()
     fix_services()
-    fix_ifmap()
-    fix_nodemgr()
     write_nodemgr_config()
     service_restart("contrail-config-nodemgr")
 
 @hooks.hook("leader-settings-changed")
-@restart_on_change({"/etc/ifmap-server/basicauthusers.properties": ["ifmap-server"]})
+@restart_on_change({"/etc/ifmap-server/basicauthusers.properties": ["supervisor-config"]})
 def leader_changed():
     write_ifmap_config()
     creds = leader_get("ifmap-creds")
@@ -382,7 +385,6 @@ def upgrade_charm():
     write_vnc_api_config()
     write_nodemgr_config()
     service_restart("supervisor-config")
-    service_restart("ifmap-server")
 
 @hooks.hook("zookeeper-relation-changed")
 def zookeeper_changed():

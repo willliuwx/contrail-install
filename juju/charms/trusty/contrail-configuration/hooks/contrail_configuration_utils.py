@@ -26,7 +26,11 @@ from charmhelpers.core.hookenv import (
     unit_get
 )
 
-from charmhelpers.core.host import service_restart
+from charmhelpers.core.host import (
+    service_available,
+    service_restart,
+    service_stop
+)
 
 from charmhelpers.core.templating import render
 
@@ -197,13 +201,20 @@ def contrail_ifmap_ctx():
 def discovery_port():
     return 5998
 
-def fix_ifmap():
-    # add ifmap.ini to supervisor
-    shutil.copy("files/ifmap.ini",
-                "/etc/contrail/supervisord_config_files")
+def fix_ifmap_server():
+    # disable ifmap-server upstart service
+    if service_available("ifmap-server"):
+        service_stop("ifmap-server")
+        with open("/etc/init/ifmap-server.override", "w") as conf:
+            conf.write("manual\n")
+
+    # use supervisord config
+    shutil.copy("files/ifmap.ini", "/etc/contrail/supervisord_config_files")
     pw = pwd.getpwnam("contrail")
-    os.chown("/etc/contrail/supervisord_config_files/ifmap.ini",
-             pw.pw_uid, pw.pw_gid)
+    os.chown("/etc/contrail/supervisord_config_files/ifmap.ini", pw.pw_uid,
+             pw.pw_gid)
+    shutil.copy("files/ifmap", "/etc/init.d")
+    os.chmod("/etc/init.d/ifmap", 0755)
 
 def fix_nodemgr():
     # add files missing from contrail-nodemgr package
@@ -214,13 +225,12 @@ def fix_nodemgr():
              pw.pw_uid, pw.pw_gid)
     shutil.copy("files/contrail-config-nodemgr", "/etc/init.d")
     os.chmod("/etc/init.d/contrail-config-nodemgr", 0755)
-    service_restart("supervisor-config")
 
 def fix_permissions():
     os.chmod("/etc/contrail", 0755)
     os.chown("/etc/contrail", 0, 0)
 
-def fix_services():
+def fix_scripts():
     version = dpkg_version("contrail-config")
     if version_compare(version, "2.01") >= 0:
         # supervisord and init scripts need correcting on contrail 2.01+
@@ -235,10 +245,12 @@ def fix_services():
                         "s/`basename ${0}`$/\"`basename ${0}`:*\"/",
                         "/etc/init.d/{}".format(service)])
 
-        service_restart("supervisor-config")
-
-    # broken java dependency on contrail 2.0+
-    service_restart("ifmap-server")
+def fix_services():
+    fix_permissions()
+    fix_ifmap_server()
+    fix_nodemgr()
+    fix_scripts()
+    service_restart("supervisor-config")
 
 def identity_admin_ctx():
     ctxs = [ { "auth_host": gethostbyname(hostname),

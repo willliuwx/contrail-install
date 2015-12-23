@@ -11,18 +11,15 @@ from charmhelpers.fetch import (
 )
 
 PACKAGES = [ "contrail-web-controller", "nodejs=0.8.15-1contrail1",
-        "supervisor" ]
+             "supervisor", "contrail-utils" ]
 
 def install():
     hookenv.log('Installing contrail-webui')
 
     configure_sources(True, "install-sources", "install-keys")
     apt_upgrade(fatal=True, dist=True)
-    apt_install(PACKAGES, fatal=True,
-            options = ['--option=Dpkg::Options::=--force-confold', '--force-yes'])
-    setup.fix_permissions()
-    setup.fix_supervisor()
+    apt_install(PACKAGES, fatal=True)
+    setup.fix_services()
 
 if __name__ == "__main__":
     install()
-

@@ -30,8 +30,3 @@ options:
       NOTE: it will get downloaded and cached every time
       the config is updated. If empty, the default will
       be used.
-  src-path:
-    type: string
-    default: ""
-    description: |
-      The source path.

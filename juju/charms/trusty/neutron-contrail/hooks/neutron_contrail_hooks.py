@@ -283,9 +283,15 @@ def neutron_metadata_relation():
 @hooks.hook("neutron-plugin-relation-joined")
 def neutron_plugin_joined():
     # create plugin config
-    section = [ ("network_api_class", "nova_contrail_vif.contrailvif.ContrailNetworkAPI") ] \
-              if version_compare(OPENSTACK_VERSION, "1:2014.2") >= 0 \
-              else [ ("libvirt_vif_driver", "nova_contrail_vif.contrailvif.VRouterVIFDriver") ]
+    if version_compare(OPENSTACK_VERSION, "1:2014.2") < 0:
+        # Icehouse
+        section = [ ("libvirt_vif_driver", "nova_contrail_vif.contrailvif.VRouterVIFDriver") ]
+    elif version_compare(OPENSTACK_VERSION, "1:2015.1") < 0:
+        # Juno
+        section = [ ("network_api_class", "nova_contrail_vif.contrailvif.ContrailNetworkAPI") ]
+    else:
+        # Kilo
+        section = []
     section.append(("firewall_driver", "nova.virt.firewall.NoopFirewallDriver"))
     conf = {
       "nova-compute": {
