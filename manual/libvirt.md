@@ -10,7 +10,7 @@ After [installation](install.md), the following steps show how to connect VMs (l
 
 ### Install packages
 ```
-$ sudo apt-get kvm libvirt-bin
+$ sudo apt-get kvm libvirt-bin virtinst
 ```
 
 * Enable the following settings in /etc/libvirt/qemu.conf to allow libvirt use tap interface.
