@@ -1,0 +1,37 @@
+auto lo
+iface lo inet loopback
+
+auto em1
+iface em1 inet manual
+
+auto lxcbr0
+iface lxcbr0 inet static
+    address __address__
+    netmask 255.255.255.0
+    gateway 10.87.64.254
+    dns-nameservers 10.84.5.100 8.8.8.8
+    dns-search juniper.net
+    bridge_ports em1
+
+auto p514p1
+iface p514p1 inet manual
+    bond-master bond0
+
+auto p514p2
+iface p514p2 inet manual
+    bond-master bond0
+
+auto bond0
+iface bond0 inet manual
+    hwaddress __mac__
+    bond-slaves none
+    bond-mode 802.3ad
+    bond-miimon 100
+    bond-xmit_hash_policy layer3+4
+
+auto lxcbr1
+iface lxcbr1 inet static
+    address __data-address__
+    netmask 255.255.255.0
+    bridge_ports bond0
+

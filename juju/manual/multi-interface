@@ -1,0 +1,44 @@
+#!/bin/sh
+
+set -e
+set -u
+
+MGMT_ADDR=$(sed -i -e '1w/dev/stdout' -e '1d' /root/mgmt_addr_list)
+DATA_ADDR=$(sed -i -e '1w/dev/stdout' -e '1d' /root/data_addr_list)
+
+cat << __EOF__ >> "$LXC_CONFIG_FILE"
+
+## added by juju charm
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = lxcbr1
+lxc.network.name = eth1
+lxc.network.hwaddr = 00:16:3e:$(openssl rand -hex 3| sed 's/\(..\)/\1:/g; s/.$//')
+lxc.network.mtu = 1500
+__EOF__
+
+cat << __EOF__ > "$LXC_ROOTFS_PATH/etc/network/interfaces"
+auto eth0
+iface eth0 inet static
+    address $MGMT_ADDR
+    netmask 255.255.255.0
+    gateway 10.87.64.254
+
+auto eth1
+iface eth1 inet static
+    address $DATA_ADDR
+    netmask 255.255.255.0
+
+dns-nameservers 10.84.5.100
+dns-search juniper.net
+__EOF__
+
+USERDATA="$LXC_ROOTFS_PATH/var/lib/cloud/seed/nocloud-net/user-data"
+
+cmd_lines="
+- echo $MGMT_ADDR  \$(hostname) >> /etc/hosts
+"
+cmd_lines=$(echo "$cmd_lines" | sed -e 's/$/\\n/' | tr -d '\n')
+
+sed -i.orig -e "s@^runcmd:@\0$cmd_lines@" "$USERDATA"
+
