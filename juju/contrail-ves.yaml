@@ -1,0 +1,789 @@
+openstack-base:
+  series: trusty
+  services:
+    api:
+      charm: "/root/juju-charms/trusty/api-base-charm"
+      num_units: 3
+      options:
+        os_mgmt_cidr: 10.98.50.0/24
+        os_mgmt_gateway: 10.98.50.1
+        vz_mgmt_cidr: 10.98.53.0/24
+        vz_mgmt_gateway: 10.98.53.1
+        api_dmz_cidr: 10.98.52.0/24
+        api_dmz_gateway: 10.98.52.1
+        storage_access_cidr: 10.98.51.0/24
+        storage_access_gateway: 10.98.51.1
+        os_mgmt_if: bond0.100
+        dns_search: lab.cloud.verizon.com
+        os_mgmt_ip_list: |
+            LAB55309OST001-10.98.50.150,10.98.50.151,10.98.50.152,10.98.50.153,10.98.50.154,10.98.50.155,10.98.50.156,10.98.50.157,10.98.50.158,10.98.50.159,10.98.50.160,10.98.50.161,10.98.50.162,10.98.50.163,10.98.50.164,10.98.50.165,10.98.50.166,10.98.50.167,10.98.50.168,10.98.50.169,10.98.50.170
+            LAB55309OST002-10.98.50.171,10.98.50.172,10.98.50.173,10.98.50.174,10.98.50.175,10.98.50.176,10.98.50.177,10.98.50.178,10.98.50.179,10.98.50.180,10.98.50.181,10.98.50.182,10.98.50.183,10.98.50.184,10.98.50.185,10.98.50.186,10.98.50.187,10.98.50.188,10.98.50.189,10.98.50.190
+            LAB55309OST003-10.98.50.191,10.98.50.192,10.98.50.193,10.98.50.194,10.98.50.195,10.98.50.196,10.98.50.197,10.98.50.198,10.98.50.199,10.98.50.200,10.98.50.201,10.98.50.202,10.98.50.203,10.98.50.204,10.98.50.205,10.98.50.206,10.98.50.207,10.98.50.208,10.98.50.209,10.98.50.210
+        vz_mgmt_ip_list: |
+            LAB55309OST001-10.98.53.150,10.98.53.151,10.98.53.152,10.98.53.153,10.98.53.154,10.98.53.155,10.98.53.156,10.98.53.157,10.98.53.158,10.98.53.159,10.98.53.160,10.98.53.161,10.98.53.162,10.98.53.163,10.98.53.164,10.98.53.165,10.98.53.166,10.98.53.167,10.98.53.168,10.98.53.169,10.98.53.170
+            LAB55309OST002-10.98.53.171,10.98.53.172,10.98.53.173,10.98.53.174,10.98.53.175,10.98.53.176,10.98.53.177,10.98.53.178,10.98.53.179,10.98.53.180,10.98.53.181,10.98.53.182,10.98.53.183,10.98.53.184,10.98.53.185,10.98.53.186,10.98.53.187,10.98.53.188,10.98.53.189,10.98.53.190
+            LAB55309OST003-10.98.53.191,10.98.53.192,10.98.53.193,10.98.53.194,10.98.53.195,10.98.53.196,10.98.53.197,10.98.53.198,10.98.53.199,10.98.53.200,10.98.53.201,10.98.53.202,10.98.53.203,10.98.53.204,10.98.53.205,10.98.53.206,10.98.53.207,10.98.53.208,10.98.53.209,10.98.53.210
+        storage_access_ip_list: |
+            LAB55309OST001-10.98.51.150,10.98.51.151,10.98.51.152,10.98.51.153,10.98.51.154,10.98.51.155,10.98.51.156,10.98.51.157,10.98.51.158,10.98.51.159,10.98.51.160,10.98.51.161,10.98.51.162,10.98.51.163,10.98.51.164,10.98.51.165,10.98.51.166,10.98.51.167,10.98.51.168,10.98.51.169,10.98.51.170
+            LAB55309OST002-10.98.51.171,10.98.51.172,10.98.51.173,10.98.51.174,10.98.51.175,10.98.51.176,10.98.51.177,10.98.51.178,10.98.51.179,10.98.51.180,10.98.51.181,10.98.51.182,10.98.51.183,10.98.51.184,10.98.51.185,10.98.51.186,10.98.51.187,10.98.51.188,10.98.51.189,10.98.51.190
+            LAB55309OST003-10.98.51.191,10.98.51.192,10.98.51.193,10.98.51.194,10.98.51.195,10.98.51.196,10.98.51.197,10.98.51.198,10.98.51.199,10.98.51.200,10.98.51.201,10.98.51.202,10.98.51.203,10.98.51.204,10.98.51.205,10.98.51.206,10.98.51.207,10.98.51.208,10.98.51.209,10.98.51.210
+        api_dmz_ip_list: |
+            LAB55309OST001-10.98.52.150,10.98.52.151,10.98.52.152,10.98.52.153,10.98.52.154,10.98.52.155,10.98.52.156,10.98.52.157,10.98.52.158,10.98.52.159,10.98.52.160,10.98.52.161,10.98.52.162,10.98.52.163,10.98.52.164,10.98.52.165,10.98.52.166,10.98.52.167,10.98.52.168,10.98.52.169,10.98.52.170
+            LAB55309OST002-10.98.52.171,10.98.52.172,10.98.52.173,10.98.52.174,10.98.52.175,10.98.52.176,10.98.52.177,10.98.52.178,10.98.52.179,10.98.52.180,10.98.52.181,10.98.52.182,10.98.52.183,10.98.52.184,10.98.52.185,10.98.52.186,10.98.52.187,10.98.52.188,10.98.52.189,10.98.52.190
+            LAB55309OST003-10.98.52.191,10.98.52.192,10.98.52.193,10.98.52.194,10.98.52.195,10.98.52.196,10.98.52.197,10.98.52.198,10.98.52.199,10.98.52.200,10.98.52.201,10.98.52.202,10.98.52.203,10.98.52.204,10.98.52.205,10.98.52.206,10.98.52.207,10.98.52.208,10.98.52.209,10.98.52.210
+      constraints: "tags=api"
+    "compute-node-a":
+      charm: "/root/juju-charms/trusty/compute-base-charm"
+      num_units: 17
+      constraints: "tags=compute-S23"
+    "storage-ccn-node":
+      charm: "/root/juju-charms/trusty/storage-base-charm"
+      num_units: 1
+      constraints: "tags=storage-ccn"
+    "storage-full-node":
+      charm: "/root/juju-charms/trusty/storage-base-charm"
+      num_units: 1
+      constraints: "tags=storage-full"
+    "storage-partial-node":
+      charm: "/root/juju-charms/trusty/storage-base-charm"
+      num_units: 3
+      constraints: "tags=storage-partial"
+
+    ntp:
+      charm: "/root/juju-charms/trusty/ntp"
+      options:
+        source: 10.98.80.11
+        auto_peers: False
+      annotations:
+        "gui-x": "1829"
+        "gui-y": "442.00000000000006"
+    "rabbitmq-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'0dKCg0mlLbrWyspIqmNeqT1oXpx2VVEpw4uJRqn1xB7VPoeBxwprTNtSL/PqUxFeDstTW69cE0V74tiONwl2AF3xTuGrYy+BJnlIAea5b0F4wME64igMsFRg+6IoUMy7Qy/wR/5d15YBknTV3DUx1kTpjxqktMc4ljJpHMmhu2s='\n"
+        corosync_transport: unicast
+        corosync_mcastport: 5406
+        corosync_bindiface: eth0
+    "percona-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'0dKCg0mlLbrWyspIqmNeqT1oXpx2VVEpw4uJRqn1xB7VPoeBxwprTNtSL/PqUxFeDstTW69cE0V74tiONwl2AF3xTuGrYy+BJnlIAea5b0F4wME64igMsFRg+6IoUMy7Qy/wR/5d15YBknTV3DUx1kTpjxqktMc4ljJpHMmhu2s='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "229"
+        "gui-y": "442"
+    "keystone-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'KNhb4++3jlllbnscS5D3qdzOJDsQPEeZ7zOLZJHbkKrRjX9gRCijVVOiv2JCvq03HqQ7LIufQzWGl9Za8qh0f6QmQ3XhFh/Cb/3WaYFj+tEf0zArWv+8miswmM1z4eyTSrTWBq0dTgx1z96wjBxP5HV0+1LWW+3Ei4oZWyRGeR0='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "829"
+        "gui-y": "788.4101615137754"
+    "nova-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'0dKCg0mlLbrWyspIqmNeqT1oXpx2VVEpw4uJRqn1xB7VPoeBxwprTNtSL/PqUxFeDstTW69cE0V74tiONwl2AF3xTuGrYy+BJnlIAea5b0F4wME64igMsFRg+6IoUMy7Qy/wR/5d15YBknTV3DUx1kTpjxqktMc4ljJpHMmhu2s='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "1229"
+        "gui-y": "95.58983848622455"
+    "glance-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'gel86qmEze8dYKYbfqIgRpqapJpKtdYL2hxC1y5nWYBPq7EMf6V8mF01IjeUkSRs14CUDrsPpT4PWeom7EOY2fleuLx/aIuqQUfEDkhf/gvaz7BaU4hrmTCoDBK7/HvEwY+/wu4qkEeckzSRPsm9MYzqnLRshh8yjZJ70xU/mmk='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "1029"
+        "gui-y": "-250.8203230275509"
+    "neutron-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'hj1hELZN94OqISuOk6Eysrl1RGFnIpUugiKJq7B3/+RScspMDuOsYtNMNRkzaNXw7jmjUhW8nnaJlNo28GIbPDqvWEjFclLcgphmTwwxC1+esiEtZhtLyKR57+GRcyXrLaWZm2hI5QtnGZyJafOBhbg7lqzmfrd/9Sf5OmDmA74='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "229"
+        "gui-y": "-250.8203230275509"
+    "dashboard-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'aCVPHw6XYne+Hxv0WPiM3+yEfeIxs0Ly0EMKB494Rdzjf5rE52GcXqqxuvIa/nXJ4GCR+UdKk9FEwcASfYkeu3HDWUld9uTE6pOc+ibWYnybNH7VBfEHW8h9YmQKs3HD2T3wlTcS2irU4CUW7/IKNok4etYdM3iFn1K2ReSGXEI='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "-171"
+        "gui-y": "441.99999999999994"
+    "cinder-ha":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        cluster_count: 3
+        corosync_key: "'el1dd8107J5mwQDPS7tEJPZrr0XFfL95+Tku/QG90W5Q5f5SP4W8TRfKvddGmZWZl2lVd1neG5WqaHa1mq/aScJpoflzVAJCvshN7Gd2AjHhLNNugeI8S90j/7wrKUhqiCAlkKaeri2xs5bB5PZ7Z9AHuNZL7SW1al8lxrKhUFI='\n"
+        corosync_transport: unicast
+      annotations:
+        "gui-x": "629"
+        "gui-y": "1134.8203230275508"
+  relations:
+    - [ "ntp", "api" ]
+    - [ "ntp", "storage-ccn-node" ]
+    - [ "ntp", "storage-partial-node" ]
+    - [ "ntp", "storage-full-node" ]
+    - [ "ntp", "compute-node-a" ]
+
+  overrides:
+    "openstack-origin": "cloud:trusty-liberty"
+    corosync_transport: "unicast"
+    "use-syslog": true
+    debug: 'True'
+
+openstack-services:
+  inherits: openstack-base
+  services:
+    "nova-compute-a":
+      charm: "/root/juju-charms/trusty/nova-compute"
+      num_units: 17
+      options:
+        "enable-live-migration": true
+        "manage-neutron-plugin-legacy-mode": false
+        "enable-resize": true
+        "migration-auth-type": ssh
+        "libvirt-image-backend": qcow2
+        "openstack-origin": "cloud:trusty-kilo"
+      to:
+        - "compute-node-a=0"
+        - "compute-node-a=1"
+        - "compute-node-a=2"
+        - "compute-node-a=3"
+        - "compute-node-a=4"
+        - "compute-node-a=5"
+        - "compute-node-a=6"
+        - "compute-node-a=7"
+        - "compute-node-a=8"
+        - "compute-node-a=9"
+        - "compute-node-a=10"
+        - "compute-node-a=11"
+        - "compute-node-a=12"
+        - "compute-node-a=13"
+        - "compute-node-a=14"
+        - "compute-node-a=15"
+        - "compute-node-a=16"
+    keystone:
+      charm: "/root/juju-charms/trusty/keystone"
+      num_units: 3
+      options:
+        "admin-password": admin
+        "admin-role": admin
+        "openstack-origin": "cloud:trusty-kilo"
+        "os-admin-network": 10.9.40.0/22
+        "os-internal-network": 10.9.40.0/22
+        "os-public-hostname": "dfw-lab-os.cloud.verizon.com"
+        "os-public-network": 10.9.47.0/25
+        region: DFW
+        vip: "10.98.50.50 10.98.52.50"
+      annotations:
+        "gui-x": "429"
+        "gui-y": "788.4101615137754"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "openstack-dashboard":
+      charm: "/root/juju-charms/trusty/openstack-dashboard"
+      num_units: 3
+      options:
+        debug: "true"
+        "openstack-origin": "cloud:trusty-kilo"
+        secret: asdfajsdfj34igj30049304939049jg0349gj30g9j
+        webroot: "/"
+        vip: 10.98.52.51
+      annotations:
+        "gui-x": "29"
+        "gui-y": "95.5898384862245"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    glance:
+      charm: "/root/juju-charms/trusty/glance"
+      num_units: 3
+      options:
+        debug: true
+        "openstack-origin": "cloud:trusty-kilo"
+        "os-admin-network": 10.9.40.0/22
+        "os-internal-network": 10.9.40.0/22
+        "os-public-hostname": "dfw-lab-os.cloud.verizon.com"
+        "os-public-network": 10.9.47.0/25
+        region: DFW
+        vip: "10.98.50.52 10.98.52.52"
+      annotations:
+        "gui-x": "1429"
+        "gui-y": "442"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    cinder:
+      charm: "/root/juju-charms/trusty/cinder"
+      num_units: 3
+      options:
+        enabled-services: api,scheduler
+        "block-device": None
+        debug: true
+        "glance-api-version": 2
+        "openstack-origin": "cloud:trusty-kilo"
+        "os-admin-network": 10.9.40.0/22
+        "os-internal-network": 10.9.40.0/22
+        "os-public-hostname": "dfw-lab-os.cloud.verizon.com"
+        "os-public-network": 10.9.47.0/25
+        overwrite: "true"
+        region: DFW
+        vip: "10.98.50.53 10.98.52.53"
+      annotations:
+        "gui-x": "229"
+        "gui-y": "1134.8203230275508"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "neutron-api":
+      charm: "/root/juju-charms/trusty/neutron-api"
+      num_units: 3
+      options:
+        debug: true
+        "enable-l3ha": true
+        "enable-dvr": false
+        "l2-population": false
+        "manage-neutron-plugin-legacy-mode": false
+        "neutron-security-groups": true
+        "openstack-origin": "cloud:trusty-kilo"
+        "os-admin-network": 10.9.40.0/22
+        "os-internal-network": 10.9.40.0/22
+        "os-public-hostname": "dfw-lab-os.cloud.verizon.com"
+        "os-public-network": 10.9.47.0/25
+        region: DFW
+        vip: "10.98.50.54 10.98.52.54"
+      annotations:
+        "gui-x": "629"
+        "gui-y": "-250.8203230275509"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "nova-cloud-controller":
+      charm: "/root/juju-charms/trusty/nova-cloud-controller"
+      num_units: 3
+      options:
+        "console-access-protocol": novnc
+        debug: true
+        "network-manager": Neutron
+        "neutron-external-network": pub_net
+        "openstack-origin": "cloud:trusty-kilo"
+        "os-admin-network": 10.9.40.0/22
+        "os-internal-network": 10.9.40.0/22
+        "os-public-hostname": "dfw-lab-os.cloud.verizon.com"
+        "os-public-network": 10.9.47.0/25
+        "quantum-security-groups": "yes"
+        "console-proxy-ip": "int-openstack.lab.cloud.verizon.com"
+        region: DFW
+        "service-guard": true
+        "single-nova-consoleauth": true
+        vip: "10.98.50.55 10.98.52.55"
+      annotations:
+        "gui-x": "1229"
+        "gui-y": "788.4101615137754"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "rabbitmq-server":
+      charm: "/root/juju-charms/trusty/rabbitmq-server"
+      num_units: 3
+      options:
+        "access-network": 10.98.50.0/22
+        ha-vip-only: True
+        source: "cloud:trusty-kilo"
+        "min-cluster-size": 3
+        vip: 10.98.50.56
+        vip_cidr: 24
+      annotations:
+        "gui-x": "1029"
+        "gui-y": "442"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    percona:
+      charm: "/root/juju-charms/trusty/percona-cluster"
+      num_units: 3
+      options:
+        "access-network": 10.98.50.0/22
+        "innodb-buffer-pool-size": "33%"
+        "max-connections": 50000
+        "min-cluster-size": 3
+        "root-password": "T3rr3m@rk"
+        "sst-password": "T3rr3m@rk"
+        source: "cloud:trusty-kilo"
+        vip: 10.98.50.57
+        vip_cidr: 24
+      annotations:
+        "gui-x": "429"
+        "gui-y": "95.58983848622455"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    memcached:
+      charm: "/root/juju-charms/trusty/memcached"
+      num_units: 3
+      options:
+        'allow-ufw-ip6-softfail': "true"
+      annotations:
+        "gui-x": "429"
+        "gui-y": "95.58983848622455"
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "hacluster-ceilometer":
+      charm: "/root/juju-charms/trusty/hacluster"
+      options:
+        corosync_key: |
+          'QQTNp3Dw/J3xbZGbvRibV/47CzpiS/07JI4PhdC+oPZvft556Kigu407wfgWOhxB6d+I4XtKI2hzQ46rdUvccAOov7Q3MRAax6i60w8fvXk2t671hrPUlx/w2ITi9Uwe0AkNLXcucPYQTxAT9H/vvFrWJjUisxMayVcd7HN8ANc='
+    "ceilometer":
+      num_units: 3
+      charm: "/root/juju-charms/trusty/ceilometer"
+      options:
+        vip: "10.98.50.58 10.98.52.58"
+        region: DFW1
+        os-public-hostname: env1.dfw-lab-os.cloud.verizon.com
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+
+    mongodb:
+      num_units: 3
+      charm: "/root/juju-charms/trusty/mongodb"
+      options:
+        auth: true
+      to:
+        - "lxc:api=0"
+        - "lxc:api=1"
+        - "lxc:api=2"
+    "ceilometer-agent":
+       charm: "/root/juju-charms/trusty/ceilometer-agent"
+
+  relations:
+    - - "rabbitmq-server"
+      - "rabbitmq-ha"
+    - - "memcached:cache"
+      - "nova-cloud-controller:memcache"
+    - - "ntp:juju-info"
+      - "percona:juju-info"
+    - - "percona:ha"
+      - "percona-ha:ha"
+    - - "keystone:shared-db"
+      - "percona:shared-db"
+    - - "keystone:ha"
+      - "keystone-ha:ha"
+    - - "glance:ha"
+      - "glance-ha:ha"
+    - - "openstack-dashboard:ha"
+      - "dashboard-ha:ha"
+    - - "neutron-api:ha"
+      - "neutron-ha:ha"
+    - - "nova-cloud-controller:ha"
+      - "nova-ha:ha"
+    - - "glance:shared-db"
+      - "percona:shared-db"
+    - - "nova-cloud-controller:shared-db"
+      - "percona:shared-db"
+    - - "nova-cloud-controller:amqp"
+      - "rabbitmq-server:amqp"
+    - - "nova-cloud-controller:identity-service"
+      - "keystone:identity-service"
+    - - "glance:image-service"
+      - "nova-cloud-controller:image-service"
+    - - "glance:identity-service"
+      - "keystone:identity-service"
+    - - "cinder:ha"
+      - "cinder-ha:ha"
+    - - "rabbitmq-server:amqp"
+      - "cinder:amqp"
+    - - "cinder:identity-service"
+      - "keystone:identity-service"
+    - - "neutron-api:shared-db"
+      - "percona:shared-db"
+    - - "cinder:shared-db"
+      - "percona:shared-db"
+    - - "neutron-api:neutron-api"
+      - "nova-cloud-controller:neutron-api"
+    - - "openstack-dashboard:identity-service"
+      - "keystone:identity-service"
+    - - "cinder:image-service"
+      - "glance:image-service"
+    - - "cinder:cinder-volume-service"
+      - "nova-cloud-controller:cinder-volume-service"
+    - - "neutron-api:identity-service"
+      - "keystone:identity-service"
+    - - "rabbitmq-server:amqp"
+      - "neutron-api:amqp"
+    - - "keystone:juju-info"
+      - "ntp:juju-info"
+    - - "nova-compute-a:amqp"
+      - "rabbitmq-server:amqp"
+    - - "nova-compute-a:image-service"
+      - "glance:image-service"
+    - - "nova-compute-a:cloud-compute"
+      - "nova-cloud-controller:cloud-compute"
+    - - "glance:amqp"
+      - "rabbitmq-server:amqp"
+    - - "ceilometer:shared-db"
+      - "mongodb:database"
+    - - "ceilometer:ceilometer-service"
+      - "ceilometer-agent:ceilometer-service"
+    - - "ceilometer:identity-notifications"
+      - "keystone:identity-notifications"
+    - - "ceilometer:identity-service"
+      - "keystone:identity-service"
+    - - "nova-compute-a:nova-ceilometer"
+      - "ceilometer-agent:nova-ceilometer"
+    - - "ceilometer:ha"
+      - "hacluster-ceilometer:ha"
+    - - "ceilometer:amqp"
+      - "rabbitmq-server:amqp"
+
+
+  overrides:
+    "openstack-origin": "cloud:trusty-liberty"
+    corosync_transport: "unicast"
+    "use-syslog": true
+    region: "DFW"
+    "os-public-hostname": "int-openstack.lab.cloud.verizon.com"
+    "os-data-network": 10.98.50.0/24
+    "os-public-network": 10.98.52.0/24
+    "os-internal-network": 10.98.50.0/24
+    "access-network": 10.98.50.0/24
+    "os-admin-network": 10.98.50.0/24
+
+contrail-base:
+  inherits: openstack-services
+  services:
+    contrail-haproxy:
+      charm: /root/juju-charms/trusty/haproxy
+      num_units: 3
+      options:
+       "peering_mode": active-active
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+    contrail-keepalive:
+      charm: /root/juju-charms/trusty/keepalived
+      options:
+        "virtual-ip": 10.98.50.60/24
+        "router-id": 125
+    kafka:
+      charm: /root/juju-charms/trusty/apache-kafka
+      num_units: 3
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+    cassandra:
+      charm: /root/juju-charms/trusty/cassandra-noauthentication
+      num_units: 3
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+      options:
+        authenticator: AllowAllAuthenticator
+        max_heap_size: 8G
+    zookeeper:
+      charm: /root/juju-charms/trusty/zookeeper
+      num_units: 3
+      options:
+       "source": "archive"
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+      constraints: mem=1G
+  relations:
+    - [ "zookeeper", "kafka" ]
+    - [ "contrail-haproxy", "contrail-keepalive" ]
+
+contrail-config:
+  inherits: contrail-base
+  services:
+    contrail-configuration:
+      charm: /root/juju-charms/trusty/contrail-configuration
+      constraints: mem=4G
+      num_units: 3
+      options:
+        "cassandra-units": 3
+        "vip": 10.98.50.60
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+  relations:
+    - [ "contrail-configuration", "contrail-haproxy" ]
+    - [ "contrail-configuration:cassandra", "cassandra:database" ]
+    - [ contrail-configuration, zookeeper ]
+    - [ contrail-configuration, rabbitmq-server ]
+    - [ contrail-configuration, keystone ]
+    - [ "ntp", "contrail-configuration" ]
+  overrides:
+    install-sources: "deb http://lab336194art001.lab.cloud.verizon.com/artifactory//contrail-3-liberty contrail-3-liberty main"
+    install-keys: EAD4C858
+
+contrail:
+  inherits: contrail-config
+  services:
+    contrail-control:
+      charm: /root/juju-charms/trusty/contrail-control
+      constraints: mem=2G
+      num_units: 3
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+    contrail-analytics:
+      charm: /root/juju-charms/trusty/contrail-analytics
+      constraints: mem=4G
+      num_units: 3
+      options:
+        "kafka-units": 3
+        "cassandra-units": 3
+        "vip": 10.98.50.60
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+    contrail-webui:
+      charm: /root/juju-charms/trusty/contrail-webui
+      constraints: mem=1G
+      num_units: 3
+      to:
+        - lxc:api=1
+        - lxc:api=2
+        - lxc:api=0
+    neutron-api-contrail:
+      charm: /root/juju-charms/trusty/neutron-api-contrail
+
+    neutron-contrail-a:
+      charm: /root/juju-charms/trusty/neutron-contrail
+      options:
+        "control-iface": bond0.100
+        "vhost-interface": bond2
+        "vhost-gateway": 10.98.24.1
+
+  relations:
+    - [ "contrail-analytics", "contrail-haproxy" ]
+    - [ "contrail-webui", "contrail-haproxy" ]
+    - [ "contrail-haproxy", "contrail-keepalive" ]
+    - [ "contrail-analytics", "kafka" ]
+    - [ "contrail-analytics:cassandra", "cassandra:database" ]
+    - [ "contrail-analytics:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "contrail-analytics:contrail-analytics-api", "contrail-configuration:contrail-analytics-api" ]
+    - [ "contrail-control:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "contrail-control:contrail-ifmap", "contrail-configuration:contrail-ifmap" ]
+    - [ "contrail-control:contrail-api", "contrail-configuration:contrail-api" ]
+    - [ contrail-control, keystone ]
+    - [ neutron-api-contrail, neutron-api ]
+    - [ neutron-api-contrail, contrail-configuration ]
+    - [ neutron-api-contrail, keystone ]
+    - [ contrail-webui, keystone ]
+    - [ "contrail-webui:contrail_api", "contrail-configuration:contrail-api" ]
+    - [ "contrail-webui:contrail_discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "contrail-webui:cassandra", "cassandra:database" ]
+    - [ neutron-contrail-a, nova-compute-a ]
+    - [ neutron-contrail-a, keystone ]
+    - [ "neutron-contrail-a:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+    - [ "neutron-contrail-a:contrail-api", "contrail-configuration:contrail-api" ]
+    - [ "ntp", "contrail-analytics" ]
+    - [ "ntp", "contrail-webui" ]
+    - [ "ntp", "contrail-control" ]
+  overrides:
+    install-sources: "deb http://lab336194art001.lab.cloud.verizon.com/artifactory//contrail-3-liberty contrail-3-liberty main"
+    install-keys: EAD4C858
+
+scaleio:
+  inherits: contrail
+  services:
+    "scaleio-mdm":
+      charm: "/root/juju-scaleio/trusty/scaleio-mdm"
+      num_units: 5
+      options:
+        "cluster-mode": 5
+        "password": "T3stpass"
+        "mgmt-iface": "bond0.102"
+      annotations:
+        "gui-x": "774.180908203125"
+        "gui-y": "-391.9740905761719"
+      to:
+        - "storage-ccn-node=0"
+        - "storage-full-node=0"
+        - "storage-partial-node=0"
+        - "storage-partial-node=1"
+        - "storage-partial-node=2"
+
+    "scaleio-sds-ccn":
+      charm: "/root/juju-scaleio/trusty/scaleio-sds"
+      num_units: 1
+      options:
+        "protection-domain": "pd1"
+        "storage-pools": "SSDPool"
+        "device-paths": "/dev/sdc,/dev/sdd,/dev/sde,/dev/sdf"
+        "storage-iface": "bond0.102"
+      annotations:
+        "gui-x": "1169.180908203125"
+        "gui-y": "-296.9740905761719"
+      to:
+        - "storage-ccn-node=0"
+
+    "scaleio-sds-full":
+      charm: "/root/juju-scaleio/trusty/scaleio-sds"
+      num_units: 1
+      options:
+        "protection-domain": "pd1"
+        "storage-pools": "SSDPool"
+        "device-paths": "/dev/sda,/dev/sdb,/dev/sdc,/dev/sdd,/dev/sde,/dev/sdf,/dev/sdg,/dev/sdh,/dev/sdi,/dev/sdj,/dev/sdk,/dev/sdl,/dev/sdm,/dev/sdn,/dev/sdo,/dev/sdp,/dev/sdq,/dev/sdr,/dev/sds,/dev/sdt,/dev/sdu,/dev/sdv,/dev/sdw,/dev/sdx"
+        "storage-iface": "bond0.102"
+      annotations:
+        "gui-x": "1169.180908203125"
+        "gui-y": "-296.9740905761719"
+      to:
+        - "storage-full-node=0"
+
+    "scaleio-sds-partial":
+      charm: "/root/juju-scaleio/trusty/scaleio-sds"
+      num_units: 3
+      options:
+        "protection-domain": "pd1"
+        "storage-pools": "SSDPool"
+        "device-paths": "/dev/sdg,/dev/sdh,/dev/sdi,/dev/sdj,/dev/sdk,/dev/sdl,/dev/sdm,/dev/sdn,/dev/sdo,/dev/sdp,/dev/sdq,/dev/sdr,/dev/sds,/dev/sdt,/dev/sdu,/dev/sdv,/dev/sdw,/dev/sdx"
+        "storage-iface": "bond0.102"
+      annotations:
+        "gui-x": "1169.180908203125"
+        "gui-y": "-296.9740905761719"
+      to:
+        - "storage-partial-node=0"
+        - "storage-partial-node=1"
+        - "storage-partial-node=2"
+
+    "scaleio-sdc":
+      charm: "/root/juju-scaleio/trusty/scaleio-sdc"
+      num_units: 22
+      annotations:
+        "gui-x": "768.180908203125"
+        "gui-y": "552.0259094238281"
+      to:
+        - "storage-ccn-node=0"
+        - "storage-full-node=0"
+        - "storage-partial-node=0"
+        - "storage-partial-node=1"
+        - "storage-partial-node=2"
+        - "compute-node-a=0"
+        - "compute-node-a=1"
+        - "compute-node-a=2"
+        - "compute-node-a=3"
+        - "compute-node-a=4"
+        - "compute-node-a=5"
+        - "compute-node-a=6"
+        - "compute-node-a=7"
+        - "compute-node-a=8"
+        - "compute-node-a=9"
+        - "compute-node-a=10"
+        - "compute-node-a=11"
+        - "compute-node-a=12"
+        - "compute-node-a=13"
+        - "compute-node-a=14"
+        - "compute-node-a=15"
+        - "compute-node-a=16"
+
+    "scaleio-gw":
+      charm: "/root/juju-scaleio/trusty/scaleio-gw"
+      num_units: 1
+      options:
+        "password": T3stpass
+      annotations:
+        "gui-x": "1055.180908203125"
+        "gui-y": "237.02590942382812"
+      to:
+        - storage-ccn-node=0
+
+    "scaleio-openstack":
+      charm: "/root/juju-scaleio/trusty/scaleio-openstack"
+      num_units: 22
+      options:
+        "protection-domains": "pd1"
+        "storage-pools": "SSDPool"
+      annotations:
+        "gui-x": "1055.180908203125"
+        "gui-y": "337.02590942382812"
+      to:
+        - "storage-ccn-node=0"
+        - "storage-full-node=0"
+        - "storage-partial-node=0"
+        - "storage-partial-node=1"
+        - "storage-partial-node=2"
+        - "compute-node-a=0"
+        - "compute-node-a=1"
+        - "compute-node-a=2"
+        - "compute-node-a=3"
+        - "compute-node-a=4"
+        - "compute-node-a=5"
+        - "compute-node-a=6"
+        - "compute-node-a=7"
+        - "compute-node-a=8"
+        - "compute-node-a=9"
+        - "compute-node-a=10"
+        - "compute-node-a=11"
+        - "compute-node-a=12"
+        - "compute-node-a=13"
+        - "compute-node-a=14"
+        - "compute-node-a=15"
+        - "compute-node-a=16"
+
+    "cinder-volume":
+      charm: "/root/juju-charms/trusty/cinder"
+      num_units: 5
+      options:
+        "enabled-services": "volume"
+        "block-device": "None"
+      to:
+        - "storage-ccn-node=0"
+        - "storage-full-node=0"
+        - "storage-partial-node=0"
+        - "storage-partial-node=1"
+        - "storage-partial-node=2"
+  overrides:
+    "protection-domain": "pd1"
+    "storage-pools": "SSDPool"
+
+  relations:
+    - - "scaleio-mdm:scaleio-sds"
+      - "scaleio-sds-ccn:scaleio-sds"
+    - - "scaleio-mdm:scaleio-sds"
+      - "scaleio-sds-full:scaleio-sds"
+    - - "scaleio-mdm:scaleio-sds"
+      - "scaleio-sds-partial:scaleio-sds"
+    - - "scaleio-mdm:scaleio-mdm"
+      - "scaleio-sdc:scaleio-mdm"
+    - - "scaleio-mdm:scaleio-mdm"
+      - "scaleio-gw:scaleio-mdm"
+    - - "scaleio-openstack:scaleio-gw"
+      - "scaleio-gw:scaleio-gw"
+    - - "cinder-volume"
+      - "rabbitmq-server"
+    - - "cinder-volume"
+      - "percona"
+

@@ -1,0 +1,13 @@
+--- hooks/charmhelpers/fetch/__init__.py	2016-04-23 04:36:10.873671000 -0700
++++ hooks/charmhelpers/fetch/__init__.py	2015-10-23 16:17:53.851365000 -0700
+@@ -306,6 +306,10 @@
+                 key_file.flush()
+                 key_file.seek(0)
+                 subprocess.check_call(['apt-key', 'add', '-'], stdin=key_file)
++        elif 'http://' in key:
++            with NamedTemporaryFile('w+') as key_file:
++                subprocess.check_call(['wget', key, '-O-'], stdout=key_file)
++                subprocess.check_call(['apt-key', 'add', key_file.name])
+         else:
+             # Note that hkp: is in no way a secure protocol. Using a
+             # GPG key id is pointless from a security POV unless you

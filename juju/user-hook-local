@@ -1,0 +1,24 @@
+prefix=192.168.122
+base=20
+netmask=255.255.255.0
+gateway=192.168.122.1
+
+idx=${LXC_NAME##j*-}
+address=$prefix.$(($base + $idx))
+
+cat << __EOF__ > "$LXC_ROOTFS_PATH/etc/network/interfaces"
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+    address $address
+    netmask $netmask
+    gateway $gateway
+
+dns-nameservers 10.84.5.100
+dns-search juniper.net
+__EOF__
+
+echo $address  $LXC_NAME >> "$LXC_ROOTFS_PATH/etc/hosts"
+

@@ -1,0 +1,45 @@
+#!/bin/sh
+
+mgmt_prefix=10.87.64
+mgmt_base=190
+
+data_prefix=192.168.122
+data_base=40
+
+# juju-machine-<machine ID>-lxc-<container ID>
+machine_id=$(echo $LXC_NAME | awk '{split($1, a, "-"); print a[3]}')
+container_id=$(echo $LXC_NAME | awk '{split($1, a, "-"); print a[5]}')
+
+factor=$(($machine_id - 1))
+
+mgmt_address=$mgmt_prefix.$(($mgmt_base + $factor * 20 + $container_id))
+data_address=$data_prefix.$(($data_base + $factor * 20 + $container_id))
+
+cat << __EOF__ >> "$LXC_CONFIG_FILE"
+## added by juju charm
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = lxcbr1
+lxc.network.name = eth1
+lxc.network.hwaddr = 00:16:3e:$(openssl rand -hex 3| sed 's/\(..\)/\1:/g; s/.$//')
+lxc.network.mtu = 1500
+__EOF__
+
+cat << __EOF__ > "$LXC_ROOTFS_PATH/etc/network/interfaces"
+auto eth0
+iface eth0 inet static
+    address $mgmt_address
+    netmask 255.255.255.128
+    gateway 10.87.64.254
+
+auto eth1
+iface eth1 inet static
+    address $data_address
+    netmask 255.255.255.0
+
+dns-nameservers 10.84.5.100
+dns-search juniper.net
+__EOF__
+
+echo $mgmt_address  $LXC_NAME >> "$LXC_ROOTFS_PATH/etc/hosts"
+

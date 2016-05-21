@@ -1,0 +1,169 @@
+#
+# Ubuntu: Trusty
+# OpenStack: Liberty
+# Contrail: 3.0.2.0-41
+#
+# This bundle configuration deploys services on 3 virtual/physical machines.
+# OpenStack controller:    1
+# Contrail controller:     1
+# Compute:                 1
+#
+# Machine provisioning is done manually for Juju manual or local environment.
+# Each OpenStack controlling service is deployed in a separate container.
+# All Contrail services are deployed together directly on the machine.
+#
+
+machines:
+  "1":
+    series: trusty
+  "2":
+    series: trusty
+  "3":
+    series: trusty
+
+series: trusty
+
+services:
+  # OpenStack
+  mysql:
+    charm: cs:trusty/mysql
+    options:
+      dataset-size: 20%
+      max-connections: 1000
+    to: [ "lxc:1" ]
+  rabbitmq-server:
+    charm: cs:trusty/rabbitmq-server
+    to: [ "lxc:1" ]
+  keystone:
+    charm: cs:trusty/keystone
+    options:
+      openstack-origin: cloud:trusty-liberty
+      admin-role: admin
+      admin-password: contrail123
+    to: [ "lxc:1" ]
+  openstack-dashboard:
+    charm: cs:trusty/openstack-dashboard
+    options:
+      openstack-origin: cloud:trusty-liberty
+    to: [ "lxc:1" ]
+  nova-cloud-controller:
+    charm: cs:trusty/nova-cloud-controller
+    options:
+      openstack-origin: cloud:trusty-liberty
+      network-manager: Neutron
+    to: [ "lxc:1" ]
+  glance:
+    charm: cs:trusty/glance
+    options:
+      openstack-origin: cloud:trusty-liberty
+    to: [ "lxc:1" ]
+  neutron-api:
+    charm: cs:trusty/neutron-api
+    options:
+      openstack-origin: cloud:trusty-liberty
+      manage-neutron-plugin-legacy-mode: false
+    to: [ "lxc:1" ]
+  nova-compute:
+    charm: cs:trusty/nova-compute
+    options:
+      openstack-origin: cloud:trusty-liberty
+      manage-neutron-plugin-legacy-mode: false
+    to: [ "3" ]
+
+  # Contrail
+  cassandra:
+    #branch: lp:~stub/charms/trusty/cassandra/noauthentication
+    charm: local:trusty/cassandra
+    options:
+      authenticator: AllowAllAuthenticator
+    to: [ "2" ]
+  zookeeper:
+    charm: cs:trusty/zookeeper
+    to: [ "2" ]
+  kafka:
+    branch: lp:~sdn-charmers/charms/trusty/apache-kafka/trunk
+    to: [ "2" ]
+  contrail-configuration:
+    charm: local:trusty/contrail-configuration
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+    to: [ "2" ]
+  contrail-control:
+    charm: local:trusty/contrail-control
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+    to: [ "2" ]
+  contrail-analytics:
+    charm: local:trusty/contrail-analytics
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+    to: [ "2" ]
+  contrail-webui:
+    charm: local:trusty/contrail-webui
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+    to: [ "2" ]
+  neutron-api-contrail:
+    charm: local:trusty/neutron-api-contrail
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+  neutron-contrail:
+    charm: local:trusty/neutron-contrail
+    options:
+      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+  
+relations:
+  # OpenStack
+  - [ keystone, mysql ]
+  - [ glance, mysql ]
+  - [ glance, keystone ]
+  - [ openstack-dashboard, keystone ]
+  - [ nova-cloud-controller, mysql ]
+  - [ nova-cloud-controller, rabbitmq-server ]
+  - [ nova-cloud-controller, keystone ]
+  - [ nova-cloud-controller, glance ]
+  - [ neutron-api, mysql ]
+  - [ neutron-api, rabbitmq-server ]
+  - [ neutron-api, nova-cloud-controller ]
+  - [ neutron-api, keystone ]
+  - [ "nova-compute:shared-db", "mysql:shared-db" ]
+  - [ "nova-compute:amqp", "rabbitmq-server:amqp" ]
+  - [ nova-compute, glance ]
+  - [ nova-compute, nova-cloud-controller ]
+
+  # Contrail
+  - [ kafka, zookeeper ]
+  - [ "contrail-configuration:cassandra", "cassandra:database" ]
+  - [ "contrail-configuration:contrail-analytics-api", "contrail-analytics:contrail-analytics-api" ]
+  - [ contrail-configuration, zookeeper ]
+  - [ contrail-configuration, rabbitmq-server ]
+  - [ contrail-configuration, keystone ]
+  - [ "contrail-analytics:cassandra", "cassandra:database" ]
+  - [ "contrail-analytics:contrail-api", "contrail-configuration:contrail-api" ]
+  - [ "contrail-analytics:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+  - [ contrail-analytics, kafka ]
+  - [ contrail-analytics, zookeeper ]
+  - [ contrail-analytics, keystone ]
+  - [ "contrail-control:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+  - [ "contrail-control:contrail-ifmap", "contrail-configuration:contrail-ifmap" ]
+  - [ "contrail-control:contrail-api", "contrail-configuration:contrail-api" ]
+  - [ contrail-control, keystone ]
+  - [ neutron-api-contrail, neutron-api ]
+  - [ neutron-api-contrail, contrail-configuration ]
+  - [ neutron-api-contrail, keystone ]
+  - [ contrail-webui, keystone ]
+  - [ "contrail-webui:contrail_api", "contrail-configuration:contrail-api" ]
+  - [ "contrail-webui:contrail_discovery", "contrail-configuration:contrail-discovery" ]
+  - [ "contrail-webui:cassandra", "cassandra:database" ]
+  - [ neutron-contrail, nova-compute ]
+  - [ neutron-contrail, keystone ]
+  - [ "neutron-contrail:contrail-discovery", "contrail-configuration:contrail-discovery" ]
+  - [ "neutron-contrail:contrail-api", "contrail-configuration:contrail-api" ]
+
+
