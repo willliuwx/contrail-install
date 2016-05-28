@@ -130,6 +130,49 @@ bootstrap_manual_2()
     juju-deployer -c contrail-user-2.yaml
 }
 
+bootstrap_manual_5()
+{
+    juju bootstrap
+    juju add-machine ssh:root@10.87.64.199
+    juju add-machine ssh:root@10.87.64.219
+    juju add-machine ssh:root@10.87.64.239
+    juju add-machine ssh:root@10.87.64.143
+    juju add-machine ssh:root@10.87.64.144
+    wait_for_machine 1
+    wait_for_machine 2
+    wait_for_machine 3
+    wait_for_machine 4
+    wait_for_machine 5
+
+    echo "Deploy..."
+    juju-deployer -c contrail-5n-lxc.yaml
+    create_openstackrc
+}
+
+bootstrap_manual_8()
+{
+    juju bootstrap
+    juju add-machine ssh:root@10.87.64.199
+    juju add-machine ssh:root@10.87.64.198
+    juju add-machine ssh:root@10.87.64.219
+    juju add-machine ssh:root@10.87.64.218
+    juju add-machine ssh:root@10.87.64.239
+    juju add-machine ssh:root@10.87.64.238
+    juju add-machine ssh:root@10.87.64.143
+    juju add-machine ssh:root@10.87.64.144
+    wait_for_machine 1
+    wait_for_machine 2
+    wait_for_machine 3
+    wait_for_machine 4
+    wait_for_machine 5
+    wait_for_machine 6
+    wait_for_machine 7
+    wait_for_machine 8
+
+    echo "Deploy..."
+    #juju-deployer -c contrail-user-2.yaml
+}
+
 load_image()
 {
     juju scp -- -o StrictHostKeyChecking=no openstackrc glance/0:.
@@ -156,6 +199,14 @@ main()
         manual-2)
             shift
             bootstrap_manual_2 "$@"
+            ;;
+        manual-5)
+            shift
+            bootstrap_manual_5 "$@"
+            ;;
+        manual-8)
+            shift
+            bootstrap_manual_8 "$@"
             ;;
         load-image)
             shift

@@ -49,6 +49,22 @@ fix_analytics_cassandra()
     cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-query-engine.conf"
     juju run --unit contrail-analytics/0 "$cmd"
     juju run --unit contrail-analytics/0 "service supervisor-analytics restart"
+
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-analytics-api.conf"
+    juju run --unit contrail-analytics/1 "$cmd"
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-collector.conf"
+    juju run --unit contrail-analytics/1 "$cmd"
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-query-engine.conf"
+    juju run --unit contrail-analytics/1 "$cmd"
+    juju run --unit contrail-analytics/1 "service supervisor-analytics restart"
+
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-analytics-api.conf"
+    juju run --unit contrail-analytics/2 "$cmd"
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-collector.conf"
+    juju run --unit contrail-analytics/2 "$cmd"
+    cmd="sed -i -e 's/9160/9042/g' /etc/contrail/contrail-query-engine.conf"
+    juju run --unit contrail-analytics/2 "$cmd"
+    juju run --unit contrail-analytics/2 "service supervisor-analytics restart"
 }
 
 fix_analytics_cassandra

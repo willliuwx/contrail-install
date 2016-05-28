@@ -9,7 +9,7 @@
 # Compute:                 1
 #
 # Machine provisioning is done manually for Juju manual or local environment.
-# Each OpenStack controlling service is deployed in a separate container.
+# Each OpenStack controller service is deployed in a separate container.
 # All Contrail services are deployed together directly on the machine.
 #
 
@@ -86,37 +86,49 @@ services:
   contrail-configuration:
     charm: local:trusty/contrail-configuration
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
     to: [ "2" ]
   contrail-control:
     charm: local:trusty/contrail-control
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
     to: [ "2" ]
   contrail-analytics:
     charm: local:trusty/contrail-analytics
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
     to: [ "2" ]
   contrail-webui:
     charm: local:trusty/contrail-webui
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
     to: [ "2" ]
   neutron-api-contrail:
     charm: local:trusty/neutron-api-contrail
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
   neutron-contrail:
     charm: local:trusty/neutron-contrail
     options:
-      install-sources: "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
-      install-keys: "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
+      install-sources:
+        "deb http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo /"
+      install-keys:
+        "http://10.84.29.100/contrail-3.0.2.0-41-liberty/repo/key"
   
 relations:
   # OpenStack

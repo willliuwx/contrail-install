@@ -1,10 +1,10 @@
 #!/bin/sh
 
 mgmt_prefix=10.87.64
-mgmt_base=190
+mgmt_base=180
 
-data_prefix=192.168.122
-data_base=40
+data_prefix=192.168.0
+data_base=180
 
 # juju-machine-<machine ID>-lxc-<container ID>
 machine_id=$(echo $LXC_NAME | awk '{split($1, a, "-"); print a[3]}')

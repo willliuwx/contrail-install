@@ -4,60 +4,77 @@ import time
 import argparse
 import subprocess
 import paramiko
+import random
 
 class Config(object):
     server1 = {
+        #'type': 'lxc',
+        'type': 'kvm',
         'hostname': '5b4s31',
         'address': '10.87.64.140',
         'username': 'root',
         'password': 'c0ntrail123',
+        'vm-address': ['10.87.64.199', '10.87.64.198', '10.87.64.197'],
         'mgmt-if': {
             'name': 'em1',
-            'lxcbr': 'lxcbr0',
+            #'lxcbr': 'lxcbr0',
+            'bridge': 'br-mgmt',
             'address': '10.87.64.140',
             'netmask': '255.255.255.128',
             'gateway': '10.87.64.254'},
         'data-if': {
             'name': 'bond0',
-            'lxcbr': 'lxcbr1',
+            #'lxcbr': 'lxcbr1',
+            'bridge': 'br-data',
             'address': '192.168.0.1',
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server2 = {
+        #'type': 'lxc',
+        'type': 'kvm',
         'hostname': '5b4s32',
         'address': '10.87.64.141',
         'username': 'root',
         'password': 'c0ntrail123',
+        'vm-address': ['10.87.64.219', '10.87.64.218', '10.87.64.217'],
         'mgmt-if': {
             'name': 'em1',
-            'lxcbr': 'lxcbr0',
+            #'lxcbr': 'lxcbr0',
+            'bridge': 'br-mgmt',
             'address': '10.87.64.141',
             'netmask': '255.255.255.128',
             'gateway': '10.87.64.254'},
         'data-if': {
             'name': 'bond0',
-            'lxcbr': 'lxcbr1',
+            #'lxcbr': 'lxcbr1',
+            'bridge': 'br-data',
             'address': '192.168.0.2',
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server3 = {
+        #'type': 'lxc',
+        'type': 'kvm',
         'hostname': '5b4s33',
         'address': '10.87.64.142',
         'username': 'root',
         'password': 'c0ntrail123',
+        'vm-address': ['10.87.64.239', '10.87.64.238', '10.87.64.237'],
         'mgmt-if': {
             'name': 'em1',
-            'lxcbr': 'lxcbr0',
+            #'lxcbr': 'lxcbr0',
+            'bridge': 'br-mgmt',
             'address': '10.87.64.142',
             'netmask': '255.255.255.128',
             'gateway': '10.87.64.254'},
         'data-if': {
             'name': 'bond0',
-            'lxcbr': 'lxcbr1',
+            #'lxcbr': 'lxcbr1',
+            'bridge': 'br-data',
             'address': '192.168.0.3',
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server4 = {
+        'type': 'bare',
         'hostname': '5b4s34',
         'address': '10.87.64.143',
         'username': 'root',
@@ -73,6 +90,7 @@ class Config(object):
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server5 = {
+        'type': 'bare',
         'hostname': '5b4s35',
         'address': '10.87.64.144',
         'username': 'root',
@@ -88,23 +106,29 @@ class Config(object):
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server6 = {
+        #'type': 'lxc',
+        'type': 'kvm',
         'hostname': '5b4s36',
         'address': '10.87.64.145',
         'username': 'root',
         'password': 'c0ntrail123',
+        'vm-address': ['10.87.64.179', '10.87.64.178', '10.87.64.177'],
         'mgmt-if': {
             'name': 'em1',
-            'lxcbr': 'lxcbr0',
+            #'lxcbr': 'lxcbr0',
+            'bridge': 'br-mgmt',
             'address': '10.87.64.145',
             'netmask': '255.255.255.128',
             'gateway': '10.87.64.254'},
         'data-if': {
             'name': 'bond0',
-            'lxcbr': 'lxcbr1',
+            #'lxcbr': 'lxcbr1',
+            'bridge': 'br-data',
             'address': '192.168.0.6',
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server7 = {
+        'type': 'juju-local',
         'hostname': '5b4s37',
         'address': '10.87.64.146',
         'username': 'root',
@@ -120,6 +144,7 @@ class Config(object):
             'netmask': '255.255.255.0',
             'slave': ['p514p1', 'p514p2']}}
     server8 = {
+        'type': 'bare',
         'hostname': 'a5s167',
         'address': '10.84.32.12',
         'username': 'root',
@@ -130,6 +155,7 @@ class Config(object):
             'netmask': '255.255.255.128',
             'gateway': '10.84.32.126'}}
     server9 = {
+        'type': 'bare',
         'hostname': 'a5s168',
         'address': '10.84.32.13',
         'username': 'root',
@@ -139,6 +165,156 @@ class Config(object):
             'address': '10.84.32.13',
             'netmask': '255.255.255.128',
             'gateway': '10.84.32.126'}}
+
+    server10 = {
+        'type': 'lxc',
+        'hostname': '5b4s31-vm1',
+        'address': '10.87.64.199',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'lxcbr': 'lxcbr0',
+            'address': '10.87.64.199',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'lxcbr': 'lxcbr1',
+            'address': '192.168.0.199',
+            'netmask': '255.255.255.0'}}
+
+    server11 = {
+        'type': 'bare',
+        'hostname': '5b4s31-vm2',
+        'address': '10.87.64.198',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.198',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.198',
+            'netmask': '255.255.255.0'}}
+
+    server12 = {
+        'type': 'bare',
+        'hostname': '5b4s31-vm3',
+        'address': '10.87.64.197',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.197',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.197',
+            'netmask': '255.255.255.0'}}
+
+    server13 = {
+        'type': 'lxc',
+        'hostname': '5b4s32-vm1',
+        'address': '10.87.64.219',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'lxcbr': 'lxcbr0',
+            'address': '10.87.64.219',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'lxcbr': 'lxcbr1',
+            'address': '192.168.0.219',
+            'netmask': '255.255.255.0'}}
+
+    server14 = {
+        'type': 'bare',
+        'hostname': '5b4s32-vm2',
+        'address': '10.87.64.218',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.218',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.218',
+            'netmask': '255.255.255.0'}}
+
+    server15 = {
+        'type': 'bare',
+        'hostname': '5b4s32-vm3',
+        'address': '10.87.64.217',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.217',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.217',
+            'netmask': '255.255.255.0'}}
+
+    server16 = {
+        'type': 'lxc',
+        'hostname': '5b4s33-vm1',
+        'address': '10.87.64.239',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'lxcbr': 'lxcbr0',
+            'address': '10.87.64.239',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'lxcbr': 'lxcbr1',
+            'address': '192.168.0.239',
+            'netmask': '255.255.255.0'}}
+
+    server17 = {
+        'type': 'bare',
+        'hostname': '5b4s33-vm2',
+        'address': '10.87.64.238',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.238',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.238',
+            'netmask': '255.255.255.0'}}
+
+    server18 = {
+        'type': 'bare',
+        'hostname': '5b4s33-vm3',
+        'address': '10.87.64.237',
+        'username': 'root',
+        'password': 'c0ntrail123',
+        'mgmt-if': {
+            'name': 'eth0',
+            'address': '10.87.64.237',
+            'netmask': '255.255.255.128',
+            'gateway': '10.87.64.254'},
+        'data-if': {
+            'name': 'eth1',
+            'address': '192.168.0.237',
+            'netmask': '255.255.255.0'}}
 
 
     def __init__(self):
@@ -158,12 +334,33 @@ class Setup(object):
     def __init__(self):
         self.parser_init()
 
-    def _image_server(self, server):
-        cmd = 'cd /cs-shared/server-manager/client;' \
-              'server-manager reimage --server_id %s ubuntu-14.04.2 ' \
-              '--no_confirm' \
-              %(server['hostname'])
-        subprocess.check_call(cmd, shell = True)
+    def get_server(self, name):
+        for server in config.server_list:
+            if server['hostname'] == name:
+                return server
+        else:
+            print 'ERROR: Server %s is not found!' %(name)
+
+    def server_image(self, server):
+        if (server['hostname'].find('vm') >= 0):
+            host_server_name = server['hostname'].split('-')[0]
+            host_server = self.get_server(host_server_name)
+            self.connect(host_server)
+            cmd = 'virsh destroy %s' %server['hostname']
+            self.exec_cmd(cmd)
+            time.sleep(5)
+            cmd = 'cd /var/vm/image; cp %s.orig %s' \
+                    %(server['hostname'], server['hostname'])
+            self.exec_cmd(cmd)
+            cmd = 'virsh create /var/vm/%s.xml' %server['hostname']
+            self.exec_cmd(cmd)
+            self.ssh.close()
+        else:
+            cmd = 'cd /cs-shared/server-manager/client;' \
+                  'server-manager reimage --server_id %s ubuntu-14.04.2 ' \
+                  '--no_confirm' \
+                  %(server['hostname'])
+            subprocess.check_call(cmd, shell = True)
         print ''
 
     def connect(self, server):
@@ -197,9 +394,12 @@ class Setup(object):
             cmd = '/bin/chmod %s %s' %(mode, dst)
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
 
-    def render_file(self, src, dst, vars):
+    def render_file(self, src, dst, vars, local = False):
         f_src = open(src)
-        f_dst = self.sftp.open(dst, 'w')
+        if local:
+            f_dst = open(dst, 'w')
+        else:
+            f_dst = self.sftp.open(dst, 'w')
         while True:
             line = f_src.readline()
             if not line:
@@ -210,6 +410,13 @@ class Setup(object):
         f_src.close()
         f_dst.close()
 
+    def nested_vm_enable(self, server):
+        config = self.sftp.open('/etc/modprobe.d/kvm-nested.conf', 'w')
+        config.write('options kvm_intel nested=1\n')
+        config.close()
+        cmd = 'rmmod kvm_intel; modprobe kvm_intel'
+        self.exec_cmd(cmd)
+
     def hosts_setup(self, server):
         print '%s: Setup hosts...' %(server['address'])
         config = self.sftp.open('/etc/hosts', 'w')
@@ -217,6 +424,10 @@ class Setup(object):
         config.write('%s %s.contrail.juniper.net %s\n' \
                 %(server['address'], server['hostname'], server['hostname']))
         config.write('\n')
+        config.close()
+        config = self.sftp.open('/etc/resolv.conf', 'w')
+        config.write('nameserver 10.84.5.100\n')
+        config.write('nameserver 8.8.8.8\n')
         config.close()
 
     def ssh_key_setup(self, server):
@@ -258,9 +469,38 @@ class Setup(object):
         self.copy_file('user-hook-manual',
                 '/usr/share/lxc/hooks/user-hook', '0755')
 
-    def restart_interface(self):
-        cmd = 'ifdown -a && ifup -a'
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
+    def libvirt_install(self, server):
+        print '%s: Install libvirt...' %(server['address'])
+        cmd = 'DEBIAN_FRONTEND=noninteractive apt-get install -y ' \
+              'qemu-kvm libvirt-bin bridge-utils virt-manager ' \
+              'qemu-system uvtool-libvirt uvtool'
+        self.exec_cmd(cmd)
+
+    def vm_configure(self, server, id, vm_name, image_name):
+        vars = {}
+        vars['name'] = vm_name
+        vars['image'] = image_name
+        vars['memory'] = str(32 * 1024)
+        vars['vcpu'] = '4'
+        s = format(random.getrandbits(24), '06x')
+        vars['mac-mgmt'] = '52:54:00:' + s[0:2] + ':' + s[2:4] + ':' + s[4:6]
+        s = format(random.getrandbits(24), '06x')
+        vars['mac-data'] = '52:54:00:' + s[0:2] + ':' + s[2:4] + ':' + s[4:6]
+        self.render_file('vm.xml', '%s.xml' %vm_name, vars, True)
+        vars['address'] = server['vm-address'][id - 1]
+        self.render_file('vm.json', '%s.json' %vm_name, vars, True)
+
+    def libvirt_setup(self, server):
+        print '%s: Building VM images...' %(server['address'])
+        cmd = 'mkdir -p /var/vm/image'
+        self.exec_cmd(cmd)
+        for id in range(1, 4):
+            vm_name = server['hostname'] + '-vm' + str(id)
+            image_name = '/var/vm/image/%s' %vm_name
+            cmd = '/usr/bin/qemu-img create -f qcow2 %s 100G' %image_name
+            self.exec_cmd(cmd)
+            #self.vm_configure(server, id, vm_name, image_name)
+            self.copy_file('%s.xml' %vm_name, '/var/vm/%s.xml' %vm_name)
 
     def interface_restart(self, server):
         print '%s: Restart interface...' %(server['address'])
@@ -271,60 +511,72 @@ class Setup(object):
 
     def data_interface_configure(self, server, config):
         data_if = server['data-if']
-        lxcbr = data_if.has_key('lxcbr')
-        if lxcbr:
-            lxcbr_name = data_if['lxcbr']
-        cmd = '/bin/cat /sys/class/net/%s/address' %data_if['slave'][0]
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        mac = stdout.read().rstrip('\n')
-        for slave_if in data_if['slave']:
-            config.write('auto %s\n' %slave_if)
-            config.write('iface %s inet manual\n' %slave_if)
-            config.write('    bond-master bond0\n')
-            config.write('\n')
-        if lxcbr:
-            config.write('auto bond0\n')
-            config.write('iface bond0 inet manual\n')
+        if (data_if['name'] == 'bond0'):
+            cmd = '/bin/cat /sys/class/net/%s/address' %data_if['slave'][0]
+            stdin, stdout, stderr = self.ssh.exec_command(cmd)
+            mac = stdout.read().rstrip('\n')
+            for slave_if in data_if['slave']:
+                config.write('auto %s\n' %slave_if)
+                config.write('iface %s inet manual\n' %slave_if)
+                config.write('    bond-master bond0\n')
+                config.write('\n')
+
+        config.write('auto %s\n' %data_if['name'])
+        if data_if.has_key('lxcbr') or data_if.has_key('bridge'):
+            config.write('iface %s inet manual\n' %data_if['name'])
+        else:
+            config.write('iface %s inet static\n' %data_if['name'])
+        if (data_if['name'] == 'bond0'):
             config.write('    hwaddress %s\n' %mac)
             config.write('    bond-slaves none\n')
             config.write('    bond-mode 802.3ad\n')
             config.write('    bond-miimon 100\n')
             config.write('    bond-xmit_hash_policy layer3+4\n')
-            config.write('\n')
-            config.write('auto %s\n' %lxcbr_name)
-            config.write('iface %s inet static\n' %lxcbr_name)
-            config.write('    address %s\n' %server['data-if']['address'])
-            config.write('    netmask %s\n' %server['data-if']['netmask'])
-            config.write('    bridge_ports bond0\n')
+        if data_if.has_key('lxcbr') or data_if.has_key('bridge'):
             config.write('\n')
         else:
-            config.write('auto bond0\n')
-            config.write('iface bond0 inet static\n')
-            config.write('    hwaddress %s\n' %mac)
-            config.write('    bond-slaves none\n')
-            config.write('    bond-mode 802.3ad\n')
-            config.write('    bond-miimon 100\n')
-            config.write('    bond-xmit_hash_policy layer3+4\n')
             config.write('    address %s\n' %server['data-if']['address'])
             config.write('    netmask %s\n' %server['data-if']['netmask'])
+            config.write('\n')
+
+        if data_if.has_key('lxcbr'):
+            config.write('auto %s\n' %data_if['lxcbr'])
+            config.write('iface %s inet static\n' %data_if['lxcbr'])
+            config.write('    address %s\n' %server['data-if']['address'])
+            config.write('    netmask %s\n' %server['data-if']['netmask'])
+            config.write('    bridge_ports %s\n' %data_if['name'])
+            config.write('\n')
+        elif data_if.has_key('bridge'):
+            config.write('auto %s\n' %data_if['bridge'])
+            config.write('iface %s inet static\n' %data_if['bridge'])
+            config.write('    address %s\n' %server['data-if']['address'])
+            config.write('    netmask %s\n' %server['data-if']['netmask'])
+            config.write('    bridge_ports %s\n' %data_if['name'])
             config.write('\n')
 
     def interface_configure(self, server):
         print '%s: Configure interface...' %(server['address'])
         mgmt_if = server['mgmt-if']
-        lxcbr = mgmt_if.has_key('lxcbr')
-        if lxcbr:
-            lxcbr_name = mgmt_if['lxcbr']
         config = self.sftp.open('/tmp/interfaces', 'w')
         config.write('auto lo\n')
         config.write('iface lo inet loopback\n')
         config.write('\n')
-        if lxcbr:
+        if mgmt_if.has_key('lxcbr'):
             config.write('auto %s\n' %mgmt_if['name'])
             config.write('iface %s inet manual\n' %mgmt_if['name'])
             config.write('\n')
-            config.write('auto %s\n' %lxcbr_name)
-            config.write('iface %s inet static\n' %lxcbr_name)
+            config.write('auto %s\n' %mgmt_if['lxcbr'])
+            config.write('iface %s inet static\n' %mgmt_if['lxcbr'])
+            config.write('    address %s\n' %mgmt_if['address'])
+            config.write('    netmask %s\n' %mgmt_if['netmask'])
+            config.write('    gateway %s\n' %mgmt_if['gateway'])
+            config.write('    bridge_ports %s\n' %mgmt_if['name'])
+        elif mgmt_if.has_key('bridge'):
+            config.write('auto %s\n' %mgmt_if['name'])
+            config.write('iface %s inet manual\n' %mgmt_if['name'])
+            config.write('\n')
+            config.write('auto %s\n' %mgmt_if['bridge'])
+            config.write('iface %s inet static\n' %mgmt_if['bridge'])
             config.write('    address %s\n' %mgmt_if['address'])
             config.write('    netmask %s\n' %mgmt_if['netmask'])
             config.write('    gateway %s\n' %mgmt_if['gateway'])
@@ -338,70 +590,68 @@ class Setup(object):
         config.write('dns-nameservers 10.84.5.100 8.8.8.8\n')
         config.write('dns-search juniper.net\n')
         config.write('\n')
-        if server.has_key('data-if') and \
-                (server['data-if']['name'] == 'bond0'):
+        if server.has_key('data-if'):
             self.data_interface_configure(server, config)
         config.close()
         self.interface_restart(server)
 
-    def get_server(self, name):
-        for server in config.server_list:
-            if server['hostname'] == name:
-                return server
-        else:
-            print 'ERROR: Server %s is not found!' %(name)
-
-    def image_server(self, args):
-        server = self.get_server(args.server)
-        if not server:
-            return
-        self._image_server(server)
-
-    def setup_server(self, args):
-        server = self.get_server(args.server)
-        if not server:
-            return
+    def server_setup(self, server):
         self.connect(server)
         self.hosts_setup(server)
         self.ssh_key_setup(server)
         self.apt_source_setup(server)
-        if server['mgmt-if'].has_key('lxcbr'):
+        if (server['type'] == 'juju-local'):
+            self.juju_local_install(server)
+        elif (server['type'] == 'kvm'):
+            self.nested_vm_enable(server)
+            self.libvirt_install(server)
+            self.libvirt_setup(server)
+        elif (server['type'] == 'lxc'):
             self.lxc_setup(server)
         self.interface_configure(server)
         self.ssh.close()
         print '%s: Disconnected...' %(server['address'])
         print ''
 
-    def setup_juju_local(self, args):
+    def cmd_image_server(self, args):
         server = self.get_server(args.server)
         if not server:
             return
-        self.connect(server)
-        self.hosts_setup(server)
-        self.ssh_key_setup(server)
-        self.apt_source_setup(server)
-        self.juju_local_install(server)
-        self.interface_configure(server)
-        self.ssh.close()
-        print '%s: Disconnected...' %(server['address'])
-        print ''
+        self.server_image(server)
 
-    def build_juju_local(self, args):
-        self.image_server(args)
+    def cmd_setup_server(self, args):
+        server = self.get_server(args.server)
+        if not server:
+            return
+        self.server_setup(server)
+
+    def cmd_build_server(self, args):
+        server = self.get_server(args.server)
+        if not server:
+            return
+        self.server_image(server)
         print 'Waiting for reboot...'
-        time.sleep(300)
-        self.setup_juju_local(args)
+        time.sleep(60)
+        self.server_setup(server)
 
-    def build_cluster(self, args):
-        server_list = ['5b4s36', 'a5s167']
+    def cmd_build_cluster(self, args):
+        #server_list = ['5b4s36', 'a5s167']
+        server_list = ['5b4s31-vm1', '5b4s32-vm1', '5b4s33-vm1', \
+                       '5b4s34', '5b4s35']
         for server_name in server_list:
             server = self.get_server(server_name)
-            self._image_server(server)
+            self.server_image(server)
         print 'Waiting for reboot...'
-        time.sleep(300)
+        time.sleep(60)
         for server_name in server_list:
             server = self.get_server(server_name)
-            self.setup_server(server)
+            self.server_setup(server)
+
+    def cmd_test(self, args):
+        server = self.get_server(args.server)
+        #self.connect(server)
+        #self.interface_configure(server)
+        #self.ssh.close()
 
     def parser_init(self):
         parser = argparse.ArgumentParser()
@@ -411,37 +661,37 @@ class Setup(object):
         #### Image server
         sub_parser = subparsers.add_parser('image-server',
                 help = 'Image server.')
-        sub_parser.set_defaults(func = self.image_server)
+        sub_parser.set_defaults(func = self.cmd_image_server)
         sub_parser.add_argument('server', metavar = 'server name',
                 help='The server name')
 
         #### Setup server
         sub_parser = subparsers.add_parser('setup-server',
                 help = 'Setup server.')
-        sub_parser.set_defaults(func = self.setup_server)
+        sub_parser.set_defaults(func = self.cmd_setup_server)
         sub_parser.add_argument('server', metavar = 'server name',
                 help='The server name')
 
-        #### Setup Juju local environment
-        sub_parser = subparsers.add_parser('setup-juju-local',
-                help = 'Setup Juju local environment.')
-        sub_parser.set_defaults(func = self.setup_juju_local)
-        sub_parser.add_argument('server', metavar = 'server name',
-                help='The server name')
-
-        #### Build Juju local server
-        sub_parser = subparsers.add_parser('build-juju-local',
-                help = 'Build Juju local server.')
-        sub_parser.set_defaults(func = self.build_juju_local)
+        #### Build server
+        sub_parser = subparsers.add_parser('build-server',
+                help = 'Build server.')
+        sub_parser.set_defaults(func = self.cmd_build_server)
         sub_parser.add_argument('server', metavar = 'server name',
                 help='The server name')
 
         #### Build cluster
         sub_parser = subparsers.add_parser('build-cluster',
                 help = 'Build a cluster.')
-        sub_parser.set_defaults(func = self.build_cluster)
+        sub_parser.set_defaults(func = self.cmd_build_cluster)
         sub_parser.add_argument('cluster', metavar = 'cluster name',
                 help='The cluster name')
+
+        #### Test
+        sub_parser = subparsers.add_parser('test',
+                help = 'Test.')
+        sub_parser.set_defaults(func = self.cmd_test)
+        sub_parser.add_argument('server', metavar = 'server name',
+                help='The server name')
 
         self.parser = parser
 
