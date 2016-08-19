@@ -242,7 +242,7 @@ env.interface_rename = False
 #}
 
 #To enable multi-tenancy feature
-multi_tenancy = True
+multi_tenancy = False
 
 #To enable haproxy feature
 haproxy = False
