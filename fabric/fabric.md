@@ -134,9 +134,13 @@ cd /opt/contrail/contrail_packages/
 * Build /opt/contrail/utils/fabfile/testbeds/testbed.py
 Here is an [example](testbed-contrail-only.py).
 
-* Install Contrail package on all nodes.
+* Goto /opt/contrail/utils directory. All fab commands have to run in that directory.
 ```
 cd /opt/contrail/utils
+```
+
+* Install Contrail package on all nodes.
+```
 fab install_pkg_all_without_openstack:<Contrail package>
 ```
 This step is not required for single-node deployment.
@@ -152,8 +156,7 @@ fab setup_without_openstack
 ```
 
 
-
-### Web UI local authentication
+#Appendix 1 Web UI local authentication
 Update /etc/contrail/config.global.js.
 ```
 config.staticAuth = [];
@@ -167,6 +170,5 @@ Restart Web UI services.
 ```
 # service supervisor-webui restart
 ```
-
 
 
