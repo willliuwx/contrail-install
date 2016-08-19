@@ -1,7 +1,7 @@
 # Contrail Only
 
-* [Contrail 3.0.2.0-51 on CentOS 7.0.1406](#2.2-contrail-3.0.2.0-51-on-centos-7.0.1406)
-* [Contrail 3.0.2.0-51 on CentOS 7.2.1511](#2.3-contrail-3.0.2.0-51-on-centos-7.2.1511)
+* [Contrail 3.0.2.0-51 on CentOS 7.0.1406](#22-contrail-3020-51-on-centos-701406)
+* [Contrail 3.0.2.0-51 on CentOS 7.2.1511](#23-contrail-3020-51-on-centos-721511)
 
 #1 Contrail on Ubuntu
 
