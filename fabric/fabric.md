@@ -2,6 +2,7 @@
 
 * [Contrail 3.0.2.0-51 on CentOS 7.0.1406](#22-contrail-3020-51-on-centos-701406)
 * [Contrail 3.0.2.0-51 on CentOS 7.2.1511](#23-contrail-3020-51-on-centos-721511)
+* [Contrail 3.1.0.0-25 on CentOS 7.2.1511](#24-contrail-3100-25-on-centos-721511)
 
 #1 Contrail on Ubuntu
 
@@ -118,45 +119,143 @@ fab setup_without_openstack
 
 ###2.3.2 Install
 
-* Copy Contrail installation package to the builder.
+* Copy Contrail installation package to the builder. The builder could be one of servers in the cluster, or a separated server.
 
-* Install the package.
+* Install the package and setup local repo.
 ```
-rpm -ivh contrail-install-packages-3.0.2.0-51~centos71liberty.el7.centos.noarch.rpm
-```
-
-* Setup local repo.
-```
+sudo rpm -ivh contrail-install-packages-3.0.2.0-51~centos71liberty.el7.centos.noarch.rpm
 cd /opt/contrail/contrail_packages/
-./setup.sh
+sudo ./setup.sh
 ```
 
 * Build /opt/contrail/utils/fabfile/testbeds/testbed.py
-Here is an [example](testbed-contrail-only.py).
+Appendix A has examples of testbed.py.
 
-* Goto /opt/contrail/utils directory. All fab commands have to run in that directory.
+* Run fabric commands to install and setup Contrail. All fab commands have to run in /opt/contrail/utils directory.
 ```
 cd /opt/contrail/utils
-```
-
-* Install Contrail package on all nodes.
-```
-fab install_pkg_all_without_openstack:<Contrail package>
-```
-This step is not required for single-node deployment.
-
-* Install Contrail.
-```
-fab install_without_openstack
-```
-
-* Setup Contrail
-```
-fab setup_without_openstack
+# This step is required for multi-node deployment.
+sudo fab install_pkg_all_without_openstack:<Contrail package>
+sudo fab install_without_openstack
+sudo fab setup_without_openstack
 ```
 
 
-#Appendix 1 Web UI local authentication
+##2.4 Contrail 3.1.0.0-25 on CentOS 7.2.1511
+
+###2.4.1 Version
+
+* CentOS: CentOS Linux release 7.2.1511 (Core)
+* Kernel: 3.10.0-327.el7.x86_64
+* Contrail: contrail-install-packages-3.1.0.0-25~liberty.el7.centos.noarch.rpm
+
+###2.4.2 Install
+
+* Copy Contrail installation package to the builder. The builder could be one of servers in the cluster, or a separated server.
+
+* Install the package and setup local repo.
+```
+sudo rpm -ivh contrail-install-packages-3.1.0.0-25~liberty.el7.centos.noarch.rpm
+cd /opt/contrail/contrail_packages/
+sudo ./setup.sh
+```
+
+* Build /opt/contrail/utils/fabfile/testbeds/testbed.py
+Appendix A has examples of testbed.py.
+
+* Patch /usr/lib/python2.7/site-packages/contrail_provisioning/common/base.py.
+```
+@@ -346,7 +346,8 @@
+                        'insecure': self._args.apiserver_insecure}
+             for param, value in configs.items():
+                 self.set_config(conf_file, 'global', param, value)
+-        if self._args.orchestrator == 'vcenter':
++        if (self._args.orchestrator == 'vcenter') or \
++                (self._args.orchestrator == 'none'):
+             # Remove the auth setion from /etc/contrail/vnc_api_lib.ini
+             # if orchestrator is not openstack
+             local("sudo contrail-config --del %s auth" % conf_file)
+```
+
+* Run fabric commands to install and setup Contrail. All fab commands have to run in /opt/contrail/utils directory.
+```
+cd /opt/contrail/utils
+# This step is required for multi-node deployment.
+sudo fab install_pkg_all_without_openstack:<Contrail package>
+sudo fab install_without_openstack
+sudo fab setup_without_openstack
+```
+
+
+#Appendix A.1 testbed.py for single-node deployment
+```
+from fabric.api import env
+
+node1 = 'centos@10.84.29.109'
+builder = 'centos@10.84.29.109'
+
+env.roledefs = {
+    'all': [node1],
+    'cfgm': [node1],
+    'control': [node1],
+    'compute': [node1],
+    'collector': [node1],
+    'webui': [node1],
+    'database': [node1],
+    'rabbit': [node1],
+    'build': [builder],
+}
+
+env.hostnames = {
+    node1: 'vm109',
+}
+
+router_asn = 64512
+ext_routers = []
+env.key_filename = '/home/centos/.ssh/id_rsa'
+env.orchestrator = 'none'
+env.interface_rename = False
+multi_tenancy = False
+minimum_diskGB = 10
+```
+
+
+#Appendix A.2 testbed.py for 2-node deployment
+```
+from fabric.api import env
+
+controller1 = 'centos@10.84.29.108'
+compute1 = 'centos@10.84.29.109'
+builder = 'centos@10.84.29.108'
+
+env.roledefs = {
+    'all': [controller1, compute1],
+    'cfgm': [controller1],
+    'control': [controller1],
+    'compute': [compute1],
+    'collector': [controller1],
+    'webui': [controller1],
+    'database': [controller1],
+    'rabbit': [controller1],
+    'build': [builder],
+}
+
+env.hostnames = {
+    controller1: 'vm108',
+    compute1: 'vm109',
+}
+
+router_asn = 64512
+ext_routers = []
+env.key_filename = '/home/centos/.ssh/id_rsa'
+env.orchestrator = 'none'
+env.interface_rename = False
+multi_tenancy = False
+minimum_diskGB = 10
+```
+
+
+#Appendix B Web UI local authentication
 Update /etc/contrail/config.global.js.
 ```
 config.staticAuth = [];
