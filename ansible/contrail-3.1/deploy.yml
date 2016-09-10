@@ -10,8 +10,10 @@
     - vars.yml
 
   pre_tasks:
-    - include: tasks/local-repo-centos.yml
-    - yum: name=python-Fabric
+    - include: tasks/pre-tasks-centos.yml
+      when: ansible_distribution == "CentOS"
+    - include: tasks/pre-tasks-ubuntu.yml
+      when: ansible_distribution == "Ubuntu"
 
   roles:
     - role: contrail-database
@@ -70,10 +72,10 @@
     - vars.yml
 
   pre_tasks:
-    - yum: name=python state=latest
-    - yum: name=PyYAML
-    - include: tasks/local-repo-centos.yml
-    - yum: name=python-Fabric
+    - include: tasks/pre-tasks-centos.yml
+      when: ansible_distribution == "CentOS"
+    - include: tasks/pre-tasks-ubuntu.yml
+      when: ansible_distribution == "Ubuntu"
 
   roles:
     - role: contrail-vrouter
@@ -85,7 +87,7 @@
 
     - name: Configure vrouter.
       shell: /usr/bin/setup-vnc-compute --physical_interface "{{ host_contrail_interface }}" --self_ip "{{ host_contrail_address}}" --contrail_internal_vip "{{ contrail_vip }}" --cfgm_ip "{{ contrail_vip }}" --no_contrail_openstack --no_nova_config
-      #when: vhost_status.stat.exists == False
+      when: vhost_status.stat.exists == False
 
     - name: Reboot...
       shell: sleep 2 && reboot
@@ -95,4 +97,19 @@
 
     #- name: Waiting upto 5 minutes for server to come back...
     #  local_action: wait_for host="{{ inventory_hostname }}" port=22 delay=60 connect_timeout=20 timeout=300
+
+####
+- name: Test
+  hosts: controller_nodes
+  tags: test
+  vars:
+    server_list: "{{ groups['controller_nodes'] }}"
+
+  tasks:
+    - debug: var=ansible_os_family
+    - debug: var=ansible_pkg_mgr
+    - debug: var=ansible_lsb
+    - debug: var=ansible_distribution
+    - debug: var=ansible_distribution_release
+    - debug: var=ansible_distribution_version
 
