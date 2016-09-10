@@ -1,0 +1,98 @@
+#!/usr/bin/env ansible-playbook
+
+####
+- name: Install Contrail controller
+  hosts: controller_nodes
+  tags: controller
+  vars:
+    server_list: "{{ groups['controller_nodes'] }}"
+  vars_files:
+    - vars.yml
+
+  pre_tasks:
+    - include: tasks/local-repo-centos.yml
+    - yum: name=python-Fabric
+
+  roles:
+    - role: contrail-database
+    - role: contrail-config
+    - role: contrail-analytics
+    - role: contrail-control
+    - role: contrail-webui
+
+  post_tasks:
+    - name: Waiting upto 150s for Cassandra to start...
+      shell: nodetool status | grep {{ host_contrail_address }}
+      register: cassandra_status
+      until: cassandra_status.stdout.find('UN') != -1
+      retries: 10
+      delay: 15
+
+    - name: Waiting upto 150s for RabbitMQ to start...
+      shell: rabbitmqctl cluster_status | grep running_nodes
+      register: rabbitmq_status
+      until: rabbitmq_status.stdout.find('{{ ansible_hostname }}-ctrl') != -1
+      retries: 10
+      delay: 15
+
+    - name: Waiting upto 150s for configuration API to be active...
+      shell: contrail-status | grep contrail-api
+      register: contrail_api_status
+      until: contrail_api_status.stdout.find('active') != -1
+      retries: 10
+      delay: 15
+
+    - name: Waiting upto 150s for analytics API to be active...
+      shell: contrail-status | grep contrail-analytics-api
+      register: contrail_analytics_api_status
+      until: contrail_analytics_api_status.stdout.find('active') != -1
+      retries: 10
+      delay: 15
+
+    - name: Configure config node.
+      shell: /usr/share/contrail/provision_config_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
+
+    - name: Configure analytics node.
+      shell: /usr/share/contrail/provision_analytics_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
+
+    - name: Configure control node.
+      shell: /usr/share/contrail/provision_control.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --api_server_port 8082 --router_asn 64512 --oper add
+
+    - name: Configure database node.
+      shell: /usr/share/contrail/provision_database_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
+
+
+####
+- name: Install Contrail vrouter
+  hosts: vrouter_nodes
+  tags: vrouter
+  vars_files:
+    - vars.yml
+
+  pre_tasks:
+    - yum: name=python state=latest
+    - yum: name=PyYAML
+    - include: tasks/local-repo-centos.yml
+    - yum: name=python-Fabric
+
+  roles:
+    - role: contrail-vrouter
+
+  post_tasks:
+    - name: Check vhost interface.
+      stat: path=/etc/sysconfig/network-scripts/ifcfg-vhost0
+      register: vhost_status
+
+    - name: Configure vrouter.
+      shell: /usr/bin/setup-vnc-compute --physical_interface "{{ host_contrail_interface }}" --self_ip "{{ host_contrail_address}}" --contrail_internal_vip "{{ contrail_vip }}" --cfgm_ip "{{ contrail_vip }}" --no_contrail_openstack --no_nova_config
+      #when: vhost_status.stat.exists == False
+
+    - name: Reboot...
+      shell: sleep 2 && reboot
+      async: 1
+      poll: 0
+      when: vhost_status.stat.exists == False
+
+    #- name: Waiting upto 5 minutes for server to come back...
+    #  local_action: wait_for host="{{ inventory_hostname }}" port=22 delay=60 connect_timeout=20 timeout=300
+

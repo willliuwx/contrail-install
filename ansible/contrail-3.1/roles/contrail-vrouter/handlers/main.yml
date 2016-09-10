@@ -1,0 +1,3 @@
+- name: restart supervisor-vrouter
+  service: name=supervisor-vrouter state=restarted
+

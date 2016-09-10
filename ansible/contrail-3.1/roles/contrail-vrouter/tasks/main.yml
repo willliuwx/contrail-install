@@ -1,0 +1,22 @@
+# Install package.
+- name: Install Contrail vrouter packages.
+  yum: name={{ item }}
+  with_items:
+    - contrail-vrouter-common
+    - python-Fabric
+
+# Supervisor
+- service: name=supervisor-vrouter enabled=yes
+
+- copy: src=files/supervisor-vrouter/{{ item }} dest=/etc/contrail/
+  with_items:
+    - supervisord_vrouter.conf
+    - supervisord_vrouter_files
+  notify: restart supervisor-vrouter
+
+# vrouter services
+- template:
+    src: templates/contrail-vrouter-nodemgr.conf
+    dest: /etc/contrail/
+  notify: restart supervisor-vrouter
+

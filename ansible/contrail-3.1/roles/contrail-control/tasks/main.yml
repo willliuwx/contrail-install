@@ -1,0 +1,25 @@
+# Install package.
+- name: Install Contrail control packages.
+  yum:
+    name: contrail-openstack-control
+
+# Control services
+- template: src=templates/{{ item }} dest=/etc/contrail/
+  with_items:
+    - contrail-control.conf
+    - contrail-control-nodemgr.conf
+    - contrail-dns.conf
+  notify: restart supervisor-control
+
+- copy: src=files/dns dest=/etc/contrail/
+  notify: restart supervisor-control
+
+# Supervisor
+- service: name=supervisor-control enabled=yes
+
+- copy: src=files/supervisor-control/{{ item  }} dest=/etc/contrail/
+  with_items:
+    - supervisord_control.conf
+    - supervisord_control_files
+  notify: restart supervisor-control
+

@@ -1,0 +1,3 @@
+- name: restart supervisor-control
+  service: name=supervisor-control state=restarted
+

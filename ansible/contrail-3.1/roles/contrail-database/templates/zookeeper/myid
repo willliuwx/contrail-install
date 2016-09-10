@@ -1,0 +1,4 @@
+{% for server in zookeeper_list %}
+{% if server == inventory_hostname %}{{ loop.index }}{% endif %}
+{% endfor %}
+

@@ -1,0 +1,61 @@
+# Install package.
+- name: Install Contrail database packages.
+  yum:
+    name: contrail-openstack-database
+
+# Cassandra
+- file: name=/var/lib/cassandra state=directory group=cassandra owner=cassandra
+
+- copy:
+    src: files/cassandra/cassandra-env.sh
+    dest: /etc/cassandra/conf/
+  notify: restart cassandra
+
+- template:
+    src: templates/cassandra/cassandra.yaml
+    dest: /etc/cassandra/conf/
+  notify: restart cassandra
+
+# Zookeeper
+- service: name=zookeeper enabled=yes
+
+- copy:
+    src: files/zookeeper/log4j.properties
+    dest: /etc/zookeeper/conf/
+  notify: restart zookeeper
+
+- template:
+    src: templates/zookeeper/zoo.cfg
+    dest: /etc/zookeeper/conf/
+  notify: restart zookeeper
+
+- template:
+    src: templates/zookeeper/myid
+    dest: /var/lib/zookeeper/
+
+# Database Supervisor
+- service: name=supervisor-database enabled=yes
+
+- copy: src=files/supervisor-database/{{ item }} dest=/etc/contrail/
+  with_items:
+    - supervisord_database.conf
+    - supervisord_database_files
+  notify: restart supervisor-database
+
+# Kafka
+- copy:
+    src: files/kafka/log4j.properties
+    dest: /usr/share/kafka/config/
+  notify: restart supervisor-database
+
+- template:
+    src: templates/kafka/server.properties
+    dest: /usr/share/kafka/config/
+  notify: restart supervisor-database
+
+# Database nodemgr
+- template:
+    src: templates/nodemgr/contrail-database-nodemgr.conf
+    dest: /etc/contrail/
+  notify: restart supervisor-database
+

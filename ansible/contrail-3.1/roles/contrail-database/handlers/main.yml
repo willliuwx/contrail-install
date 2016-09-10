@@ -1,0 +1,10 @@
+
+- name: restart cassandra
+  service: name=cassandra state=restarted
+
+- name: restart zookeeper
+  service: name=zookeeper state=restarted
+
+- name: restart supervisor-database
+  service: name=supervisor-database state=restarted
+

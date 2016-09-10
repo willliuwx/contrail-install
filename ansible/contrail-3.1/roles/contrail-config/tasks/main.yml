@@ -1,0 +1,55 @@
+# Install package.
+- name: Install Contrail config packages.
+  yum:
+    name: contrail-openstack-config
+
+# RabbitMQ
+- service: name=rabbitmq-server enabled=yes
+
+- shell: cat /etc/hosts
+  register: host_list
+
+- shell: echo "{{ host_contrail_address }}"  "{{ ansible_hostname }}"-ctrl  "{{ ansible_hostname }}"-ctrl >> /etc/hosts
+  when: host_list.stdout.find('ctrl') == -1
+
+- template: src=templates/rabbitmq/{{ item  }} dest=/etc/rabbitmq/
+  with_items:
+    - rabbitmq.config
+    - rabbitmq-env.conf
+  notify: restart rabbitmq-server
+
+# IF-MAP
+- copy: src=files/ifmap/{{ item }} dest=/etc/ifmap-server/
+  with_items:
+    - log4j.properties
+    - ifmap.properties
+    - publisher.properties
+  notify: restart supervisor-config
+
+- template:
+    src: templates/ifmap/basicauthusers.properties
+    dest: /etc/ifmap-server/
+  notify: restart supervisor-config
+
+# Configuration services
+- template: src=templates/{{ item }} dest=/etc/contrail/
+  with_items:
+    - contrail-discovery.conf
+    - contrail-api.conf
+    - contrail-schema.conf
+    - contrail-svc-monitor.conf
+    - contrail-device-manager.conf
+    - contrail-config-nodemgr.conf
+    - contrail-keystone-auth.conf
+    - vnc_api_lib.ini
+  notify: restart supervisor-config
+
+# Supervisor
+- service: name=supervisor-config enabled=yes
+
+- copy: src=files/supervisor-config/{{ item }} dest=/etc/contrail/
+  with_items:
+    - supervisord_config.conf
+    - supervisord_config_files
+  notify: restart supervisor-config
+

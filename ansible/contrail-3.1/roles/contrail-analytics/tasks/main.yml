@@ -1,0 +1,35 @@
+# Install package.
+- name: Install Contrail analytics packages.
+  yum:
+    name: contrail-openstack-analytics
+
+# Redis
+- service: name=redis enabled=yes
+
+- template:
+    src: templates/redis/redis.conf
+    dest: /etc/
+  notify: restart redis
+
+# Analytics services
+- template: src=templates/{{ item }} dest=/etc/contrail/
+  with_items:
+    - contrail-alarm-gen.conf
+    - contrail-analytics-api.conf
+    - contrail-analytics-nodemgr.conf
+    - contrail-collector.conf
+    - contrail-keystone-auth.conf
+    - contrail-query-engine.conf
+    - contrail-snmp-collector.conf
+    - contrail-topology.conf
+  notify: restart supervisor-analytics
+
+# Supervisor
+- service: name=supervisor-analytics enabled=yes
+
+- copy: src=files/supervisor-analytics/{{ item }} dest=/etc/contrail/
+  with_items:
+    - supervisord_analytics.conf
+    - supervisord_analytics_files
+  notify: restart supervisor-analytics
+

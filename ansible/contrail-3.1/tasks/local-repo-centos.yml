@@ -1,0 +1,28 @@
+- name: Check Contrail installation package.
+  stat: path=/opt/{{ contrail_pkg.split('/')[-1] }}
+  register: pkg_status
+
+- name: Copy Contrail installation package.
+  copy: src="{{ contrail_pkg }}" dest=/opt/
+  when: pkg_status.stat.exists == False
+
+- name: Install contrail-install package.
+  yum:
+    name: "/opt/{{ contrail_pkg.split('/')[-1] }}"
+
+- name: Check Contrail local repo.
+  stat: path=/etc/yum.repos.d/contrail-install.repo
+  register: repo_status
+
+- name: Create local repo directory.
+  file: name=/opt/contrail/contrail_install_repo state=directory
+  when: repo_status.stat.exists == False
+
+- name: Unpack repo package.
+  shell: tar xzf /opt/contrail/contrail_packages/contrail_rpms.tgz -C /opt/contrail/contrail_install_repo
+  when: repo_status.stat.exists == False
+
+- name: Create yum repo configuration.
+  copy: src=files/contrail-install.repo dest=/etc/yum.repos.d
+  when: repo_status.stat.exists == False
+

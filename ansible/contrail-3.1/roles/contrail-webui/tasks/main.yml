@@ -1,0 +1,24 @@
+# Install package.
+- name: Install Contrail web UI packages.
+  yum:
+    name: contrail-openstack-webui
+
+# Web UI services
+- template: src=templates/{{ item }} dest=/etc/contrail/
+  with_items:
+    - config.global.js
+    - contrail-webui-userauth.js
+    - vnc_api_lib.ini
+  notify: restart supervisor-webui
+
+- copy: src=files/webui_ssl dest=/etc/contrail/
+
+# Supervisor
+- service: name=supervisor-webui enabled=yes
+
+- copy: src=files/supervisor-webui/{{ item }} dest=/etc/contrail/
+  with_items:
+    - supervisord_webui.conf
+    - supervisord_webui_files
+  notify: restart supervisor-webui
+

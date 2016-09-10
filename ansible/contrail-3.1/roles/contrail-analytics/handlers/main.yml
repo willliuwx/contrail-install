@@ -1,0 +1,6 @@
+- name: restart supervisor-analytics
+  service: name=supervisor-analytics state=restarted
+
+- name: restart redis
+  service: name=redis state=restarted
+

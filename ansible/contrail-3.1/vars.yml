@@ -1,0 +1,15 @@
+contrail_pkg: /root/contrail-install-packages-3.1.0.0-25~centos71liberty.el7.centos.noarch.rpm
+
+contrail_vip: 10.84.29.109
+
+host_contrail_interface: eth1
+
+####
+cassandra_list: "{{ server_list }}"
+zookeeper_list: "{{ server_list }}"
+rabbitmq_list: "{{ server_list }}"
+kafka_list: "{{ server_list }}"
+control_node_list: "{{ server_list }}"
+
+host_contrail_address: "{{ inventory_hostname }}"
+

@@ -1,0 +1,6 @@
+- name: restart supervisor-config
+  service: name=supervisor-config state=restarted
+
+- name: restart rabbitmq-server
+  service: name=rabbitmq-server state=restarted
+

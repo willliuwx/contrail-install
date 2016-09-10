@@ -1,0 +1,20 @@
+localhost ansible_connection=local
+
+# Host alias is the address for Contrail.
+# Single node
+[one_node]
+10.84.29.109 ansible_host=10.84.29.109
+
+# POC
+[controller_nodes]
+10.84.29.109 ansible_host=10.84.29.109
+
+[vrouter_nodes]
+10.84.29.110 ansible_host=10.84.29.110
+
+# Production
+#[controller_nodes]
+#[analytics_nodes]
+#[analytics_database_nodes]
+#[vrouter_nodes]
+
