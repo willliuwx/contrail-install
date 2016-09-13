@@ -12,8 +12,8 @@
   notify: restart cassandra
 
 - template:
-    src: templates/cassandra/cassandra.yaml
-    dest: /etc/cassandra/conf/
+    src: templates/cassandra/cassandra.yaml.j2
+    dest: /etc/cassandra/conf/cassandra.yaml
   notify: restart cassandra
 
 # Zookeeper
@@ -25,13 +25,13 @@
   notify: restart zookeeper
 
 - template:
-    src: templates/zookeeper/zoo.cfg
-    dest: /etc/zookeeper/conf/
+    src: templates/zookeeper/zoo.cfg.j2
+    dest: /etc/zookeeper/conf/zoo.cfg
   notify: restart zookeeper
 
 - template:
-    src: templates/zookeeper/myid
-    dest: /var/lib/zookeeper/
+    src: templates/zookeeper/myid.j2
+    dest: /var/lib/zookeeper/myid
 
 # Database Supervisor
 - service: name=supervisor-database enabled=yes
@@ -49,13 +49,13 @@
   notify: restart supervisor-database
 
 - template:
-    src: templates/kafka/server.properties
-    dest: /usr/share/kafka/config/
+    src: templates/kafka/server.properties.j2
+    dest: /usr/share/kafka/config/server.properties
   notify: restart supervisor-database
 
 # Database nodemgr
 - template:
-    src: templates/nodemgr/contrail-database-nodemgr.conf
-    dest: /etc/contrail/
+    src: templates/nodemgr/contrail-database-nodemgr.conf.j2
+    dest: /etc/contrail/contrail-database-nodemgr.conf
   notify: restart supervisor-database
 

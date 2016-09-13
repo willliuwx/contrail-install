@@ -16,7 +16,7 @@
 
 # vrouter services
 - template:
-    src: templates/contrail-vrouter-nodemgr.conf
-    dest: /etc/contrail/
+    src: templates/contrail-vrouter-nodemgr.conf.j2
+    dest: /etc/contrail/contrail-vrouter-nodemgr.conf
   notify: restart supervisor-vrouter
 

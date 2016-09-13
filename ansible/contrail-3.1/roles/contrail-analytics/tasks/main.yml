@@ -7,12 +7,12 @@
 - service: name=redis enabled=yes
 
 - template:
-    src: templates/redis/redis.conf
-    dest: /etc/
+    src: templates/redis/redis.conf.j2
+    dest: /etc/redis.conf
   notify: restart redis
 
 # Analytics services
-- template: src=templates/{{ item }} dest=/etc/contrail/
+- template: src=templates/{{ item }}.j2 dest=/etc/contrail/{{ item }}
   with_items:
     - contrail-alarm-gen.conf
     - contrail-analytics-api.conf

@@ -1,0 +1,3 @@
+- name: Provision vrouter.
+  shell: /usr/bin/setup-vnc-compute --physical_interface "{{ host_contrail_interface }}" --self_ip "{{ host_contrail_address}}" --contrail_internal_vip "{{ contrail_vip }}" --cfgm_ip "{{ contrail_vip }}" --no_contrail_openstack --no_nova_config
+

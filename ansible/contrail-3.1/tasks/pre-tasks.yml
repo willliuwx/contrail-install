@@ -1,0 +1,6 @@
+- include: pre-tasks-centos.yml
+  when: ansible_distribution == "CentOS"
+
+- include: pre-tasks-ubuntu.yml
+  when: ansible_distribution == "Ubuntu"
+

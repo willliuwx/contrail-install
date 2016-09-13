@@ -10,10 +10,7 @@
     - vars.yml
 
   pre_tasks:
-    - include: tasks/pre-tasks-centos.yml
-      when: ansible_distribution == "CentOS"
-    - include: tasks/pre-tasks-ubuntu.yml
-      when: ansible_distribution == "Ubuntu"
+    - include: tasks/pre-tasks.yml
 
   roles:
     - role: contrail-database
@@ -23,45 +20,22 @@
     - role: contrail-webui
 
   post_tasks:
-    - name: Waiting upto 150s for Cassandra to start...
-      shell: nodetool status | grep {{ host_contrail_address }}
-      register: cassandra_status
-      until: cassandra_status.stdout.find('UN') != -1
-      retries: 10
-      delay: 15
+    - name: Waiting for Cassandra to run...
+      wait_for: port=9160
 
-    - name: Waiting upto 150s for RabbitMQ to start...
-      shell: rabbitmqctl cluster_status | grep running_nodes
-      register: rabbitmq_status
-      until: rabbitmq_status.stdout.find('{{ ansible_hostname }}-ctrl') != -1
-      retries: 10
-      delay: 15
+    - name: Waiting for RabbitMQ to run...
+      wait_for: port=5672
 
-    - name: Waiting upto 150s for configuration API to be active...
-      shell: contrail-status | grep contrail-api
-      register: contrail_api_status
-      until: contrail_api_status.stdout.find('active') != -1
-      retries: 10
-      delay: 15
+    - name: Waiting for configuration API to run...
+      wait_for: port=8082
 
-    - name: Waiting upto 150s for analytics API to be active...
-      shell: contrail-status | grep contrail-analytics-api
-      register: contrail_analytics_api_status
-      until: contrail_analytics_api_status.stdout.find('active') != -1
-      retries: 10
-      delay: 15
+    - name: Waiting for analytics API to run...
+      wait_for: port=8081
 
-    - name: Configure config node.
-      shell: /usr/share/contrail/provision_config_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
-
-    - name: Configure analytics node.
-      shell: /usr/share/contrail/provision_analytics_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
-
-    - name: Configure control node.
-      shell: /usr/share/contrail/provision_control.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --api_server_port 8082 --router_asn 64512 --oper add
-
-    - name: Configure database node.
-      shell: /usr/share/contrail/provision_database_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
+    - include: taks/provision-config.yml
+    - include: taks/provision-control.yml
+    - include: taks/provision-analytics.yml
+    - include: taks/provision-database.yml
 
 
 ####
@@ -72,10 +46,7 @@
     - vars.yml
 
   pre_tasks:
-    - include: tasks/pre-tasks-centos.yml
-      when: ansible_distribution == "CentOS"
-    - include: tasks/pre-tasks-ubuntu.yml
-      when: ansible_distribution == "Ubuntu"
+    - include: tasks/pre-tasks.yml
 
   roles:
     - role: contrail-vrouter
@@ -85,8 +56,7 @@
       stat: path=/etc/sysconfig/network-scripts/ifcfg-vhost0
       register: vhost_status
 
-    - name: Configure vrouter.
-      shell: /usr/bin/setup-vnc-compute --physical_interface "{{ host_contrail_interface }}" --self_ip "{{ host_contrail_address}}" --contrail_internal_vip "{{ contrail_vip }}" --cfgm_ip "{{ contrail_vip }}" --no_contrail_openstack --no_nova_config
+    - include: tasks/provision-vrouter.yml
       when: vhost_status.stat.exists == False
 
     - name: Reboot...

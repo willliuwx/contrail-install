@@ -12,7 +12,7 @@
 - shell: echo "{{ host_contrail_address }}"  "{{ ansible_hostname }}"-ctrl  "{{ ansible_hostname }}"-ctrl >> /etc/hosts
   when: host_list.stdout.find('ctrl') == -1
 
-- template: src=templates/rabbitmq/{{ item  }} dest=/etc/rabbitmq/
+- template: src=templates/rabbitmq/{{ item  }}.j2 dest=/etc/rabbitmq/{{ item }}
   with_items:
     - rabbitmq.config
     - rabbitmq-env.conf
@@ -27,12 +27,12 @@
   notify: restart supervisor-config
 
 - template:
-    src: templates/ifmap/basicauthusers.properties
-    dest: /etc/ifmap-server/
+    src: templates/ifmap/basicauthusers.properties.j2
+    dest: /etc/ifmap-server/basicauthusers.properties
   notify: restart supervisor-config
 
 # Configuration services
-- template: src=templates/{{ item }} dest=/etc/contrail/
+- template: src=templates/{{ item }}.j2 dest=/etc/contrail/{{ item }}
   with_items:
     - contrail-discovery.conf
     - contrail-api.conf

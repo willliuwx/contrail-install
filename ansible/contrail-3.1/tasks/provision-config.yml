@@ -1,0 +1,3 @@
+- name: Provision config node.
+  shell: /usr/share/contrail/provision_config_node.py --host_name "{{ ansible_hostname }}" --host_ip "{{ host_contrail_address }}" --api_server_ip "{{ contrail_vip }}" --oper add
+
