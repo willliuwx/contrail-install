@@ -21,21 +21,21 @@
 
   post_tasks:
     - name: Waiting for Cassandra to run...
-      wait_for: port=9160
+      wait_for: port=9160 host="{{host_contrail_address }}"
 
     - name: Waiting for RabbitMQ to run...
-      wait_for: port=5672
+      wait_for: port=5672 host="{{host_contrail_address }}"
 
     - name: Waiting for configuration API to run...
-      wait_for: port=8082
+      wait_for: port=8082 host="{{host_contrail_address }}"
 
     - name: Waiting for analytics API to run...
-      wait_for: port=8081
+      wait_for: port=8081 host="{{host_contrail_address }}"
 
-    - include: taks/provision-config.yml
-    - include: taks/provision-control.yml
-    - include: taks/provision-analytics.yml
-    - include: taks/provision-database.yml
+    - include: tasks/provision-config.yml
+    - include: tasks/provision-control.yml
+    - include: tasks/provision-analytics.yml
+    - include: tasks/provision-database.yml
 
 
 ####
@@ -74,12 +74,14 @@
   tags: test
   vars:
     server_list: "{{ groups['controller_nodes'] }}"
+  vars_files:
+    - vars.yml
 
   tasks:
+    - name: Waiting for Cassandra to run...
+      wait_for: port=9160 host="{{host_contrail_address }}"
     - debug: var=ansible_os_family
     - debug: var=ansible_pkg_mgr
     - debug: var=ansible_lsb
     - debug: var=ansible_distribution
-    - debug: var=ansible_distribution_release
-    - debug: var=ansible_distribution_version
 
