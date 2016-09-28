@@ -187,6 +187,96 @@ sudo fab setup_without_openstack
 ```
 
 
+#3 Split configuration DB and analytics DB
+There are three controlling roles in this deployment model, controller (configuration, control, web UI, RabbitMQ, Zookeeper and Cassandra), analytics and analytics-DB (Cassandra and Kafka).
+
+* Install packages, database is installed on analytics-DB. Here is an example of role definition in testbed.py.
+```
+env.roledefs = {
+    'all': [controller1, controller2, controller3, \
+            analytics1, analytics2, analytics3, \
+            analytics_db1, analytics_db2, analytics_db3],
+    'cfgm': [controller1, controller2, controller3],
+    'control': [controller1, controller2, controller3],
+    'compute': [compute1, compute2],
+    'collector': [analytics1, analytics2, analytics3],
+    'webui': [controller1, controller2, controller3],
+    'database': [analytics_db1, analytics_db2, analytics_db3],
+    'build': [builder],
+}
+```
+```
+fab install_without_openstack
+```
+
+* Update role definition to install database on controller.
+```
+env.roledefs = {
+    'all': [controller1, controller2, controller3, \
+            analytics1, analytics2, analytics3, \
+            analytics_db1, analytics_db2, analytics_db3],
+    'cfgm': [controller1, controller2, controller3],
+    'control': [controller1, controller2, controller3],
+    'compute': [compute1, compute2],
+    'collector': [analytics1, analytics2, analytics3],
+    'webui': [controller1, controller2, controller3],
+    'database': [controller1, controller2, controller3],
+    'build': [builder],
+}
+```
+```
+fab install_database
+```
+
+* Setup all services on controller.
+```
+fab setup_database  
+fab verify_database 
+fab setup_common
+fab setup_ha
+fab setup_rabbitmq_cluster
+fab increase_limits
+fab setup_cfgm
+fab verify_cfgm 
+fab setup_control
+fab verify_control 
+```
+
+* Reverse the change in testbed.py to set analytics-DB with database role and setup all the rest.
+```
+env.roledefs = {
+    'all': [controller1, controller2, controller3, \
+            analytics1, analytics2, analytics3, \
+            analytics_db1, analytics_db2, analytics_db3],
+    'cfgm': [controller1, controller2, controller3],
+    'control': [controller1, controller2, controller3],
+    'compute': [compute1, compute2],
+    'collector': [analytics1, analytics2, analytics3],
+    'webui': [controller1, controller2, controller3],
+    'database': [analytics_db1, analytics_db2, analytics_db3],
+    'build': [builder],
+}
+```
+fab setup_database
+fab verify_database
+fab setup_collector
+fab setup_webui
+fab verify_webui 
+fab setup_vrouter
+fab prov_config
+fab prov_database
+fab prov_analytics
+fab prov_control_bgp
+fab prov_external_bgp
+fab prov_metadata_services
+fab prov_encap_type
+fab setup_remote_syslog 
+fab increase_vrouter_limits
+fab compute_reboot
+fab verify_compute
+```
+
+
 #Appendix A.1 testbed.py for single-node deployment
 ```
 from fabric.api import env
