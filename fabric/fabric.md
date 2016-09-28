@@ -257,6 +257,7 @@ env.roledefs = {
     'build': [builder],
 }
 ```
+```
 fab setup_database
 fab verify_database
 fab setup_collector
