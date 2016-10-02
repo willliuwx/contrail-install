@@ -2,7 +2,7 @@
 
 This guide is to install Contrail networking (without OpenStack) 3.0.2 for CentOS 7.2.
 
-The testbed.py in Appendex A.1 is for 9 controlling servers, 3 controller nodes, 3 analytics nodes and 3 analytics-db nodes.
+The testbed.py in Appendix A.1 is for 9 controlling servers, 3 controller nodes, 3 analytics nodes and 3 analytics-db nodes.
 
 Each controller node has the following services.
 * configuration
@@ -22,7 +22,7 @@ The analytics-db node has the following services.
 * Zookeeper (disabled)
 * Kafka
 
-The testbed.py in Appendex A.2 is for 4 controlling servers, 3 controller nodes and 1 analytics node. Here analytics and analytics-db nodes are combined.
+The testbed.py in Appendix A.2 is for 4 controlling servers, 3 controller nodes and 1 analytics node. Here analytics and analytics-db nodes are combined.
 
 
 #2 Pre-Installation
@@ -140,7 +140,7 @@ fab reboot_node:no,root@10.1.1.20
 ```
 
 
-#Appendex A.1 testbed.py
+#Appendix A.1 testbed.py
 ```
 from fabric.api import env
 
@@ -196,7 +196,7 @@ env.ha = {
 ```
 
 
-#Appendex A.2 testbed.py
+#Appendix A.2 testbed.py
 ```
 from fabric.api import env
 
