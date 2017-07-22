@@ -395,7 +395,7 @@ webui_config = {'http_listen_port': '8085'}
 kubernetes_pod_subnet = 10.10.0.0/16
 kubernetes_service_subnet = 10.80.0.0/16
 kubernetes_cluster_project = {'domain': 'default-domain', 'project': 'kubernetes'}
-kubernetes_public_fip_pool = {'domain': 'default-domain', 'project': 'kubernetes', 'network': 'public', 'name': 'public'}
+kubernetes_public_fip_pool = {'domain': 'default-domain', 'project': 'kubernetes', 'network': 'public', 'name': 'default'}
 
 ```
 
