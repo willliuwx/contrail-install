@@ -3,9 +3,9 @@
 This is the guide for integrating Contrail with Kubernetes.
 
 Versions:
-* CentOS 7.2 or 7.3
+* CentOS 7.3
 * Contrail 4.0.0.0-20
-* Kubernetes 1.6 or 1.7
+* Kubernetes 1.7.1
 
 # 2 Builder
 
@@ -56,35 +56,133 @@ contrail-vrouter-compiler-centos7-4.0.0.0-20.tar.gz
 ```
 
 
-# 3 Existing Kubernetes
+# 3 Kubernetes
 
-## 3.1 Pre-deployment
+## 3.1 Install with kubeadm
 
-### 3.1.1 SSH
+[Bootstrapping Clusters with kubeadm](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
+
+Install Docker. Version 1.12 is recommended.
+```
+yum install docker
+```
+
+Add Kubernete repo /etc/yum.repos.d/kubernetes.repo.
+```
+[kubernetes]
+name=Kubernetes
+baseurl=http://yum.kubernetes.io/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+    https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+```
+
+Ensure SELinux is disabled or permissive.
+```
+sestatues
+setenforce 0
+```
+
+Install packages.
+```
+yum install -y kubelet kubeadm
+
+systemctl enable docker
+systemctl start docker
+```
+
+Determine service address pool. The default is 10.96.0.0/12.
+
+Update /etc/systemd/system/kubelet.service.d/10-kubeadm.conf.
+* On the master, comment or remove the KUBELET_NETWORK_ARGS.
+* Update cluster-dns address if service address pool is not default.
+
+Enable and start kubelet.
+```
+systemctl daemon-reload
+systemctl enable kubelet
+systemctl start kubelet
+```
+
+Provision the master. Argument --service-cidr can be used if the service address pool is not the default.
+```
+kubeadm init
+```
+
+Disable firewall or add rule to open the port.
+```
+systemctl disable firewalld
+systemctl stop firewalld
+```
+
+Provision all compute nodes. The 'join' command is from the output of master provisioning.
+```
+kubeadm join --token <token> <master-ip>:<master-port>
+```
+
+On the master, enable the insecure-port in /etc/kubernetes/manifests/kube-apiserver.yaml. And restart kubelet.
+```
+     - --secure-port=6443
+     - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
++    - --insecure-port=8080
++    - --insecure-bind-address=0.0.0.0
+```
+
+```
+service kubelet restart
+```
+
+On the master, add KUBECONFIG.
+```
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+export KUBECONFIG=$HOME/.kube/config
+```
+
+## 3.2 Install Manually
+[Manual installation on CentOS](https://kubernetes.io/docs/getting-started-guides/centos/centos_manual_config/)
+
+
+# 4 Contrail
+
+## 4.1 Pre-deployment
+
+### 4.1.1 SSH Key
 
 For Ansible to access all hosts with SSH key, place private key on the builder and add public key to .ssh/authorized_keys on all hosts.
 
-### 3.1.2 Private repo
+### 4.1.2 Private repo
 
 If private repo is required, add private repo to all hosts.
 
 See [Appendix A Private repo](#appendix-a-private-repo) for details.
 
-### 3.1.3 Docker
+### 4.1.3 Docker
 
-Docker version used by this guide is 1.12.6.
+Docker is installed as part of Kubernetes installation by kubeadm, but manual installation doesn't require Docker.
 
-If Docker 1.12.1 exists on host, it works fine, no need to upgrade. Ensure Docker is running.
+Install Docker now if it's not installed yet. Docker version used by this guide is 1.12.6.
+
+Note: If Docker 1.12.1 exists on host, it works fine, no need to upgrade. Ensure Docker is running.
 
 In case to upgrade/install Docker from the private repo, remove some packages that cause dependency issue, then install Docker.
 ```
 yum erase libselinux-devel libselinux-utils libsepo-devel libsepol-devel
 yum install docker
+systemctl enable docker
+systemctl start docker
 ```
 
-### 3.1.4 NTP
+Check Docker cgroup driver by "docker info | grep cGroup". If it's cgroupfs (existing Docker), no update required. If it's systemd (upgraded Docker), "--cgroup-driver=systemd" has to be added into command line in /usr/lib/systemd/system/kubelet.service.
 
-NTP service is required by Contrail on all hosts. In case no NTP service is available in the closed environment, set standalong NTP server on each node.
+Note, adding arguments into KUBELET_ARGS in /etc/kubenetes/kubelet doesn't take effect, even after "system daemon-reload" and "ps ax | grep kubelet" shows the argument, it just has no effect.
+
+### 4.1.4 NTP
+
+NTP service is required by Contrail on all hosts. In case no NTP service is available in the closed environment, set standalong NTP server on each host.
 
 Install NTP service.
 ```
@@ -108,13 +206,13 @@ Verify NTP service.
 ntpq -p
 ```
 
-### 3.1.5 Kernel
+### 4.1.5 Kernel
 
 On compute node, kernel used in this guide is 3.10.0-514.21.1.el7.x86_64. Package kernel-devel and kernel-headers are also required to compile vrouter kernel module.
 
 This upgrade is only required for CentOS 7.2, not for CentOS 7.3.
 
-### 3.1.6 Flannel network
+### 4.1.6 Flannel network
 
 If flannel network is already deployed with Kubernetes, it needs to be removed.
 ```
@@ -134,7 +232,7 @@ It causes problem when hitting this line in /usr/lib/python2.7/dist-packages/con
             dev_mac = netifaces.ifaddresses(i)[netifaces.AF_LINK][0]['addr']
 ```
 
-### 3.1.7 Insecured access
+### 4.1.7 Insecured access
 
 Ensure insecured access is enabled in /etc/docker/daemon.json.
 ```
@@ -145,34 +243,28 @@ Ensure insecured access is enabled in /etc/docker/daemon.json.
 service kubelet restart
 ```
 
-
-## 3.2 Deploy
-
-Run playbook.
-```
-ansible-playbook -i inventory/k16.ini site.yml
-```
-
-## 3.3 Post-deployment
-
-### 3.3.1 kubenetes-cni
-
-Install kubnetes-cni package. Or just extract kubernets-cni.tgz to /opt/cni/bin directory.
-
-### 3.3.2 Cgroup driver
-
-Check Docker cgroup driver by "docker info | grep cGroup". If it's cgroupfs (existing Docker), no update required. If it's systemd (upgraded Docker), "--cgroup-driver=systemd" has to be added into command line in /usr/lib/systemd/system/kubelet.service.
-
-Note, adding arguments into KUBELET_ARGS in /etc/kubenetes/kubelet doesn't take effect, even after "system daemon-reload" and "ps ax | grep kubelet" shows the argument, it just has no effect.
-
-### 3.3.3 Hostname
+### 4.1.8 Hostname
 
 Update /etc/kubenetes/kubelet to remove argument '--hostname-override'. Contrail needs to know the compute node hostname to locate vrouter and link container (VM object) to that vrouter. So control node can push configuration to that vrouter.
 ```
 #NODE_HOSTNAME="--hostname-override=192.168.189.136"
 ```
 
-### 3.3.4 CNI
+
+## 4.2 Deploy
+
+Run playbook.
+```
+ansible-playbook -i inventory/kubernetes.ini site.yml
+```
+
+## 4.3 Post-deployment
+
+### 4.3.1 kubenetes-cni
+
+Install kubnetes-cni package. Or just extract kubernets-cni.tgz to /opt/cni/bin directory.
+
+### 4.3.2 CNI
 
 Update /usr/lib/systemd/system/kubelet.service to add CNI arguments. Note, adding arguments to /etc/kubenetes/kubelet has no effect.
 ```
@@ -191,7 +283,7 @@ systemctl restart kubelet
 systemctl status kubelet -l
 ```
 
-## 3.4 Validate
+## 4.4 Validate
 
 Since private registry is not ready, load Docker images onto compute node.
 ```
@@ -201,136 +293,29 @@ docker load < pause.tar.gz
 
 Create pod yaml files on the master and launch them.
 ```
-kubectl create -f nginx-1.yaml
-kubectl create -f nginx-2.yaml
+kubectl create -f web-1.yaml
+kubectl create -f web-2.yaml
 ```
 
-nginx-1.yaml
+web-1.yaml
 ```
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-1
+  name: web-1
 spec:
   containers:
-  - name: nginx
+  - name: web
     image: docker.io/nginx
     imagePullPolicy: IfNotPresent
 ```
 
 Check networking in pod and ping each other.
 ```
-kubectl exec nginx-1 ip addr
-kubectl exec nginx-2 ip addr
-kubectl exec nginx-1 ping <address of nginx-2>
+kubectl exec web-1 ip addr
+kubectl exec web-2 ip addr
+kubectl exec web-1 ping <address of web-2>
 ```
-
-
-# 4 New Kubernetes
-
-## 4.1 Pre-deployment
-
-### 4.1.1 SSH
-
-The same as [3.1.1 SSH](311-ssh).
-
-### 4.1.2 Private repo
-
-The same as [3.1.2 Private repo](312-private-repo).
-
-### 4.1.3 Docker
-
-Docker will be installed when deploy Kubernetes.
-
-### 4.1.4 NTP
-
-The same as [3.1.4 NTP](#313ntp).
-
-### 4.1.5 Kernel
-
-The same as [3.1.5 Kernel](#314kernel).
-
-
-## 4.2 Deploy
-
-### 4.2.1 Kubernetes
-
-Add Kubernete repo /etc/yum.repos.d/kubernetes.repo.
-```
-[kubernetes]
-name=Kubernetes
-baseurl=http://yum.kubernetes.io/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-    https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-```
-
-Ensure SELinux is disabled or permissive.
-```
-sestatues
-setenforce 0
-```
-
-Install packages.
-```
-yum install -y kubelet kubeadm kubectl kubernetes-cni
-```
-
-Update /etc/systemd/system/kubelet.service.d/10-kubeadm.conf.
-* On the master, comment or remove the KUBELET_NETWORK_ARGS.
-* On the master and all compute nodes, add '--cgroup-driver=systemd' to KUBELET_KUBECONFIG_ARGS and KUBELET_SYSTEM_PODS_ARGS.
-
-Enable and start kubelet.
-```
-systemctl daemon-reload
-systemctl enable kubelet
-systemctl start kubelet
-```
-
-Provision the master.
-```
-kubeadm init
-```
-
-Provision all compute nodes. The 'join' command is from the output of master provisioning.
-```
-kubeadm join --token <token> <master-ip>:<master-port>
-```
-
-On the master, enable the insecure-port in /etc/kubernetes/manifests/kube-apiserver.yaml. And restart kubelet.
-```
-     - --secure-port=6443
-     - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
-+    - --insecure-port=8080
-+    - --insecure-bind-address=0.0.0.0
-```
-
-```
-service kubelet restart
-```
-
-On the master, add KUBECONFIG.
-```
-cp /etc/kubernetes/admin.conf $HOME/
-sudo chown $(id -u):$(id -g) $HOME/admin.conf
-export KUBECONFIG=$HOME/admin.conf
-```
-
-### 4.2.2 Contrail
-
-Run playbook.
-```
-ansible-playbook -i inventory/k16.ini site.yml
-```
-
-## 4.3 Post-deployment
-
-
-## 4.4 Validate
-
-The same as [3.4 Validate](34-validate).
 
 
 # Appendix A Private repo
@@ -394,7 +379,7 @@ yum repolist
 192.168.189.137
 
 [all:vars]
-docker_install_method: package
+docker_install_method = package
 ansible_user = root
 
 cloud_orchestrator = kubernetes
@@ -405,5 +390,16 @@ os_release = ubuntu14.04
 contrail_version = 4.0.0.0-20
 
 webui_config = {'http_listen_port': '8085'}
+
+
+kubernetes_pod_subnet = 10.10.0.0/16
+kubernetes_service_subnet = 10.80.0.0/16
+kubernetes_cluster_project = {'domain': 'default-domain', 'project': 'kubernetes'}
+kubernetes_public_fip_pool = {'domain': 'default-domain', 'project': 'kubernetes', 'network': 'public', 'name': 'public'}
+
 ```
+
+# Appendix C Bootstrapping Clusters with kubeadm
+[Bootstrapping Clusters with kubeadm](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
+
 
