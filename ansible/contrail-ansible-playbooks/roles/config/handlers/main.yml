@@ -1,0 +1,10 @@
+---
+
+- name: restart contrail-config-services
+  service: name="{{ item }}" state=restarted
+  with_items:
+   - contrail-discovery
+   - contrail-api
+   - contrail-device-manager
+   - contrail-schema
+

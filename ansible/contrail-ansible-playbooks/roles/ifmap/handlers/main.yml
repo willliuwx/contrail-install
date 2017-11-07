@@ -1,0 +1,6 @@
+---
+
+- name: restart contrail-ifmap-service
+  service: name="{{ item }}" state=restarted
+  with_items:
+   - ifmap-server

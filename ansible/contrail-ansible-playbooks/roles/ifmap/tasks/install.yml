@@ -1,0 +1,11 @@
+---
+
+- name: install contrail config packages
+  apt: pkg={{ item }} state=present update_cache=yes
+  with_items:
+  - ifmap-server
+
+- name: contrail config services started and enabled
+  service: name={{ item }} state=started enabled=yes
+  with_items:
+   - ifmap-server

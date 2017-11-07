@@ -1,0 +1,10 @@
+---
+
+- name: Ensures bird configuration dir exists
+  file: path=/etc/bird/ state=directory
+
+- name: bird service configuration file
+  template: src={{ item }}.conf.j2 dest=/etc/contrail/{{ item }}.conf
+  with_items:
+   - bird
+  notify: restart bird

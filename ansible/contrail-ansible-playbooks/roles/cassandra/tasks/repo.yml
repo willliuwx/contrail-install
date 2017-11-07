@@ -1,0 +1,14 @@
+---
+
+- name: Install python-software-properties
+  apt: pkg=python-software-properties state=installed
+
+- name: Add Datastax apt repo
+  apt_repository:
+    repo="deb http://debian.datastax.com/community stable main"
+    state=present
+
+- name: Add Datastax apt key
+  apt_key:
+    url=http://debian.datastax.com/debian/repo_key
+    state=present

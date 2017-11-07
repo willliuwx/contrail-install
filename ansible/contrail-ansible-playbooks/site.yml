@@ -1,0 +1,58 @@
+---
+
+- hosts: all
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - contrail-base
+  tags:
+    - base
+
+- hosts: rabbitmq
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - rabbitmq
+  tags:
+    - base
+
+- hosts: cassandra
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - oracle-java8
+    - cassandra
+  vars:
+    cassandra_servers: "{{ groups['cassandra'] }}"
+
+- hosts: analytics
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - redis
+    - analytics
+
+- hosts: zookeeper
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - zookeeper
+
+- hosts: config
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/defaults.yml
+  roles:
+    - ifmap
+    - config

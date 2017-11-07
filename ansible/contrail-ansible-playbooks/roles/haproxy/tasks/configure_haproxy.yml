@@ -1,0 +1,16 @@
+---
+
+- name: Ensures haproxy configuration dir exists
+  file: path=/etc/haproxy/ state=directory
+
+- name: enable haproxy in /etc/defaults
+  template: src={{ item }}.j2 dest=/etc/default/{{ item }}
+  with_items:
+   - haproxy
+
+- name: haproxy configuration files
+  template: src={{ item }}.cfg.j2 dest=/etc/haproxy/{{ item}}.cfg
+  with_items:
+   - haproxy
+  notify: haproxy services restarted
+

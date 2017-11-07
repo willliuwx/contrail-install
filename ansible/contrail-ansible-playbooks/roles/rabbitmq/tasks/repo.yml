@@ -1,0 +1,12 @@
+---
+
+- name: Add RabbitMQ key
+  apt_key:
+    url=https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey
+    state=present
+
+- name: Add RabbitMQ repo
+  apt_repository:
+    repo="deb https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu/ trusty main"
+    state=present
+

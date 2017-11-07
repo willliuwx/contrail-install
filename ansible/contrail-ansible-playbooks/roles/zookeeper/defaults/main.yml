@@ -1,0 +1,10 @@
+---
+
+tick_time: 2000
+init_limit: 10
+sync_limit: 5
+data_dir: "/var/lib/zookeeper"
+client_port: "{{ zookeeper_server_port }}"
+connect_to_leader_port: 2888
+leader_election_port: 3888
+

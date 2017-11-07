@@ -1,0 +1,39 @@
+[DEFAULTS]
+zk_server_ip={% set comma = joiner(",") %}{% for host in zookeeper_servers %}{{ comma() }}{{ host }}:{{ zookeeper_server_port }}{% endfor %}
+listen_ip_addr=0.0.0.0
+listen_port=15998
+log_local=True
+log_file=/var/log/contrail/contrail-discovery.log
+log_level=SYS_DEBUG
+cassandra_server_list={% set comma = joiner(" ") %}{% for host in cassandra_servers %}{{ comma() }}{{ host }}:{{cassandra_server_port}}{% endfor %} 
+# number of retry of cassandra request failure
+# cass_max_retries = 5
+
+# timeout for the cassandra request
+# cass_timeout = 0.5
+
+# minimim time to allow client to cache service information (seconds)
+ttl_min=300
+
+# maximum time to allow client to cache service information (seconds)
+ttl_max=1800
+
+# health check ping interval <=0 for disabling
+hc_interval=5
+
+# maximum hearbeats to miss before server will declare publisher out of
+# service.
+hc_max_miss=3
+
+# use short TTL for agressive rescheduling if all services are not up
+ttl_short=1
+
+######################################################################
+# Other service specific knobs ...
+
+# use short TTL for agressive rescheduling if all services are not up
+# ttl_short=1
+
+# specify policy to use when assigning services
+# policy = [load-balance | round-robin | fixed]
+######################################################################

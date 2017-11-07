@@ -1,0 +1,10 @@
+---
+
+- include: repo.yml
+
+# Configuration must be laid down before the packages are installed because
+# otherwise Cassandra will fail to start due to configuration vs. data
+# cluster name mismatch.
+- include: configuration.yml
+- include: packages.yml
+

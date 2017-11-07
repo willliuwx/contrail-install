@@ -1,0 +1,11 @@
+---
+
+- name: install haproxy service
+  apt: pkg={{ item }} state=present update_cache=yes
+  with_items:
+   - haproxy
+
+- name: haproxy service started and enabled
+  service: name={{ item }} state=started enabled=yes
+  with_items:
+   - haproxy

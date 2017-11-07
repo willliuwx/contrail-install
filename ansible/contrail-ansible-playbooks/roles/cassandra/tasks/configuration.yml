@@ -1,0 +1,18 @@
+---
+
+- name: Create Cassandra configuration directory
+  file:
+    path=/etc/cassandra
+    state=directory
+
+- name: Install Cassandra config file
+  template:
+    src="{{ playbook_dir }}/roles/cassandra/templates/cassandra.yaml.j2"
+    dest=/etc/cassandra/cassandra.yaml
+  notify: Restart cassandra
+
+- name: Install log4j config file
+  template:
+    src="{{ playbook_dir }}/roles/cassandra/templates/log4j-server.properties.j2"
+    dest=/etc/cassandra/log4j-server.properties
+  notify: Restart cassandra

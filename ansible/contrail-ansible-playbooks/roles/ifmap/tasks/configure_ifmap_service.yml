@@ -1,0 +1,11 @@
+---
+
+- name: Ensures contrail configuration dir exists
+  file: path=/etc/ifmap-server/ state=directory
+
+- name: contrail config service configuration files
+  template: src={{ item }}.j2 dest=/etc/ifmap-server/{{ item }}
+  with_items:
+   - basicauthusers.properties
+   - ifmap.properties
+  notify: restart contrail-ifmap-service

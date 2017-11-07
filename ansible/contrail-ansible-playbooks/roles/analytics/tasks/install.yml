@@ -1,0 +1,13 @@
+---
+
+- name: install contrail analytics
+  apt: pkg={{ item }} state=present update_cache=yes
+  with_items:
+    - contrail-analytics
+
+- name: contrail analytics services started and enabled
+  service: name={{ item }} state=started enabled=yes
+  with_items:
+   - contrail-collector
+   - contrail-query-engine
+   - contrail-analytics-api

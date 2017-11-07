@@ -1,0 +1,23 @@
+---
+
+- name: Add contrail key
+  apt_key:
+    keyserver=keyserver.ubuntu.com
+    id=6839FE77
+
+- name: Add contrail general repo
+  apt_repository:
+    repo="deb http://ppa.launchpad.net/opencontrail/ppa/ubuntu {{ ansible_distribution_release }} main"
+
+- name: Add contrail version-specific repo
+  apt_repository:
+    repo="deb http://ppa.launchpad.net/opencontrail/r{{ contrail_version }}/ubuntu {{ ansible_distribution_release }} main"
+
+- name: Add datastax key
+  apt_key:
+    url=http://debian.datastax.com/debian/repo_key
+
+- name: Add datastax repo
+  apt_repository:
+    repo="deb http://debian.datastax.com/community stable main"
+    state=present

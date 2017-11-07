@@ -1,0 +1,26 @@
+log "/var/log/bird" all;
+
+router id 198.51.100.99;
+
+protocol device
+{
+    scan time 60;
+}
+
+protocol direct
+{
+    interface "vif";
+}
+
+protocol bgp vultr
+{
+    local as 6996;
+    source address 198.51.100.99;
+    import none;
+    export all;
+    graceful restart on;
+    next hop self;
+    multihop 2;
+    neighbor 169.254.169.254 as 64515;
+    password "contrail";
+}

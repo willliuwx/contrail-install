@@ -1,0 +1,17 @@
+---
+
+contrail_version: '2.20'
+
+rabbitmq_server_ip: "{{ groups['config'][0] }}" # this variable will be updated in keepalived playbook
+rabbitmq_server_port: 5673
+rabbitmq_username: admin
+rabbitmq_password: admin 
+
+cassandra_servers: "{{ groups['analytics'] }}"
+cassandra_server_port: 9160
+
+zookeeper_servers: "{{ groups['analytics'] }}"
+zookeeper_server_port: 2181
+
+discovery_service_ip: "{{ groups['config'][0] }}" # this variable will be updated in keepalived playbook
+discovery_service_port: 5998 # this variable will be updated in keepalived playbook

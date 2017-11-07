@@ -1,0 +1,46 @@
+---
+
+- include: repo.yml
+
+- name: install required packages
+  apt: pkg={{ item }} state=present update_cache=yes
+  with_items:
+    - rabbitmq-server
+
+- name: install ssl-cert
+  apt: pkg=ssl-cert state=present
+  when: rabbitmq_ssl and rabbitmq_ssl_use_snakeoil_cert
+
+- name: add rabbitmq user to the ssl-cert group
+  user: name=rabbitmq append=yes groups=ssl-cert
+  when: rabbitmq_ssl and rabbitmq_ssl_use_snakeoil_cert
+
+- include: config-cluster.yml
+  when: rabbitmq_create_cluster
+
+- name: rabbitmq config file
+  template: src=etc/rabbitmq/rabbitmq.config.j2 dest=/etc/rabbitmq/rabbitmq.config owner=root group=root mode=0644
+  notify: restart rabbitmq-server
+  tags: [configuration,rabbitmq]
+
+- name: rabbitmq default file
+  template: src=etc/default/rabbitmq-server.j2 dest=/etc/default/rabbitmq-server owner=root group=root mode=0644
+  notify: restart rabbitmq-server
+  tags: [configuration,rabbitmq]
+
+- name: rabbitmq environment variables
+  template: src=etc/rabbitmq/rabbitmq-env.j2 dest=/etc/rabbitmq/rabbitmq-env.conf owner=root group=root mode=0644
+  notify: restart rabbitmq-server
+  tags: [configuration,rabbitmq]
+
+- name: rabbitmq service started and enabled
+  service: name=rabbitmq-server state=started enabled=yes
+  tags: [service,rabbitmq]
+
+- include: cluster.yml
+  when: 'rabbitmq_create_cluster and (ansible_hostname != rabbitmq_cluster_master) and (ansible_fqdn != rabbitmq_cluster_master)'
+
+- include: rabbitmq.yml
+  when: 'not rabbitmq_create_cluster or (ansible_hostname == rabbitmq_cluster_master) or (ansible_fqdn == rabbitmq_cluster_master)'
+
+- meta: flush_handlers

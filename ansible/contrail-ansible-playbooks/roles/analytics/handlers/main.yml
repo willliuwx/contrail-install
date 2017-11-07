@@ -1,0 +1,8 @@
+---
+
+- name: contrail analytics services restarted
+  service: name={{ item }} state=restarted
+  with_items:
+   - contrail-collector
+   - contrail-query-engine
+   - contrail-analytics-api

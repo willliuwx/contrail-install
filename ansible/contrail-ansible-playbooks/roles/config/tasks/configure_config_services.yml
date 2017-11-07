@@ -1,0 +1,13 @@
+---
+
+- name: Ensures contrail configuration dir exists
+  file: path=/etc/contrail/ state=directory
+
+- name: contrail config service configuration files
+  template: src={{ item }}.conf.j2 dest=/etc/contrail/{{ item }}.conf
+  with_items:
+   - contrail-discovery
+   - contrail-api
+   - contrail-device-manager
+   - contrail-schema
+  notify: restart contrail-config-services

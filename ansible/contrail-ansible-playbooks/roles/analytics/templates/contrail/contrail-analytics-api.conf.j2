@@ -1,0 +1,21 @@
+[DEFAULTS]
+host_ip = {{ ansible_default_ipv4.address }}
+collectors = {{ansible_default_ipv4.address}}:8086
+cassandra_server_list={% set comma = joiner(" ") %}{% for host in cassandra_servers %}{{ comma() }}{{ host }}:{{cassandra_server_port}}{% endfor %} 
+#http_server_port = 8090
+#rest_api_port = 8081
+#rest_api_ip = 0.0.0.0
+log_local = 1
+log_level = SYS_NOTICE
+#log_category = 
+log_file = /var/log/contrail/contrail-analytics-api.log
+
+[DISCOVERY]
+disc_server_ip = {{ discovery_service_ip }}
+disc_server_port = {{ discovery_service_port  }}
+
+[REDIS]
+server={{ redis_server_ip }}
+redis_server_port={{ redis_server_port }}
+redis_query_port={{ redis_server_port }}
+

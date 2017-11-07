@@ -1,0 +1,8 @@
+---
+
+- name: Ensures redis configuration dir exists
+  file: path=/etc/redis/ state=directory
+
+- name: redis config file
+  template: src=redis.conf.j2 dest=/etc/redis.conf
+  notify: restart redis

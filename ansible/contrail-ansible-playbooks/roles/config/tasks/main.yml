@@ -1,0 +1,4 @@
+---
+
+- include: configure_config_services.yml
+- include: install.yml

@@ -1,0 +1,16 @@
+---
+
+- name: zookeeper service started and enabled
+  service: name=zookeeper state=started enabled=yes
+
+- name: zookeeper config file
+  template: src=zoo.cfg.j2 dest=/etc/zookeeper/conf/zoo.cfg owner=root group=root mode=0644
+  notify: restart zookeeper
+
+- name: zookeeper config file
+  template: src=myid.j2 dest=/etc/zookeeper/conf/myid owner=root group=root mode=0644
+  notify: restart zookeeper
+
+- name: log4j config file
+  template: src=log4j.properties.j2 dest=/etc/zookeeper/conf/log4j.properties owner=root group=root mode=0644
+  notify: restart zookeeper

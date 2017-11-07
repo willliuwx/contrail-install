@@ -1,0 +1,4 @@
+---
+
+- include: configure_analytics_services.yml
+- include: install.yml

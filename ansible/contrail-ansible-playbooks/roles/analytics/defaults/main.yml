@@ -1,0 +1,4 @@
+---
+
+redis_server_ip: "{{ ansible_default_ipv4.address }}"
+redis_server_port: 6379
