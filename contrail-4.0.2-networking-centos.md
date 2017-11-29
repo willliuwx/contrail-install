@@ -146,7 +146,7 @@ ansible 2.4.0.0
 ```
 
 
-## 2.3 Docker CE
+## 2.3 Docker
 
 Docker on the builder is for creating registry container to hold all Contrail containers. The builder doesn't have dependency to specific Docker version.
 
@@ -308,9 +308,9 @@ Do the followings to get compute node ready for deployment.
 * Add insecure-registries.
 * Remove OVS.
 
-Run playbook [upgrade-kernel](#c-2-compute-pre-deploy-yml).
+Run playbook [compute-pre-deploy](#c-2-compute-pre-deploy-yml).
 ```
-ansible-playbook -i inventory/openstack compute-pre-deploy.yml
+ansible-playbook -i inventory/openstack.ini compute-pre-deploy.yml
 ```
 
 
@@ -473,6 +473,112 @@ No need to update nova.conf for nova-compute. Contrail VIF is already supported 
 
 # 5 Kubernetes
 
+## 5.1 Contrail Node
+
+### 5.1.1 Controller Node
+
+Four containers will be deployed on each controller node. They can be deployed on the existing Kubernetes master node, or on separated node.
+* controller
+* analytics
+* analyticsdb
+* kube-manager
+
+
+## 5.1.2 Load Balancer Node
+
+Contrail LB node is not required. The existing LB will be updated to support Contrail VIP.
+
+
+## 5.1.3 Slave/Vrouter Node
+
+On each slave node, flannel networking has to be removed. The data network interface can't be on any bridge. It can be bonding interface, physical interface or logical/VLAN interface.
+
+Playbook will deploy vrouter-agent in container and vrouter kernel module on each compute node.
+
+
+## 5.2 Inventory
+
+Build inventory file [kubernetes.ini](#b-2-kubernetes).
+
+
+## 5.3 Pre-Deployment
+
+### 5.3.1 Prepare Controller Node
+
+Do the followings to get controller node ready for deployment.
+* Enable private repository.
+* Install Docker 1.12.6.
+* Add insecure-registries.
+* Install and configure NTP.
+* Due to a binding of /etc/timezone between Ubuntu based container (file) and CentOS based Host (directory), fix the mismatch.
+
+Run playbook [controller-pre-deploy.yml](#c-1-controller-pre-deploy-yml).
+```
+ansible-playbook -i inventory/openstack.ini controller-pre-deploy.yml
+```
+
+
+### 5.3.2 Prepare Slave Node
+
+The existing slave node has services deployed in Kolla containers on CentOS 7.2 host. Docker version is 1.12.5.
+
+Do the followings to get compute node ready for deployment.
+* Enable private repository.
+* Upgrade kernel to kernel-3.10.0-514.21.1.el7.
+* Install kernel-devel and kernel-headers.
+* Upgrade python-docker-py.
+* Install and configure NTP.
+* Fix /etc/timezone for Ubuntu based container.
+* Add insecure-registries.
+* Remove flannel.
+* Install CNI.
+* Update kubelet configuration.
+
+
+Run playbook [slave-pre-deploy](#c-6-slave-pre-deploy-yml).
+```
+ansible-playbook -i inventory/kubernetes.ini slave-pre-deploy.yml
+```
+
+#### Note
+The flannel0 interface doesn't have a link address.
+```
+6: flannel0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1472 qdisc pfifo_fast state UNKNOWN mode DEFAULT qlen 500
+    link/none 
+```
+
+It causes problem when hitting this line in /usr/lib/python2.7/dist-packages/contrail_vrouter_provisioning/network.py in vrouter agent container. It only happens when vhost0 interface is already created.
+```
+            dev_mac = netifaces.ifaddresses(i)[netifaces.AF_LINK][0]['addr']
+```
+
+Check Docker cgroup driver "docker info | grep cGroup". If it's cgroupfs (existing Docker), no update required. If it's systemd (upgraded Docker), "--cgroup-driver=systemd" has to be added into command line in /usr/lib/systemd/system/kubelet.service.
+
+Update /etc/kubenetes/kubelet. Contrail needs to know the compute node hostname to locate vrouter and link container (VM object) to that vrouter. So control node can push configuration to that vrouter.
+```
+#NODE_HOSTNAME="--hostname-override=192.168.189.136"
+```
+
+
+## 5.4 Deploy
+
+### 5.4.1 Deploy Controller Node
+
+Run playbook to deploy controller nodes.
+```
+ansible-playbook -i inventory/kubernetes.ini controller.yml 
+```
+
+#### Note
+There is a bug in kube-manager container. The internal-playbook doesn't build supervisor files for kube-manager. Because kube-manager didn't start, the container keeps restarting. Need to manually copy supervisord_kubernetes.conf and supervisord_kubernetes_files into container to make it work.
+
+
+### 5.4.2 Add Slave Node
+
+Comment out old existing compute nodes and add new compute nodes into openstack.ini. Run playbook to add compute nodes.
+```
+ansible-playbook -i inventory/kubernetes.ini compute-add.yml 
+```
 
 
 # Appendix A Repository
@@ -588,72 +694,105 @@ vrouter_physical_interface = eth0
 ```
 
 
+## B.2 Kubernetes
+kubernetes.ini
+```
+[all:children]
+contrail-controllers
+contrail-analytics
+contrail-analyticsdb
+contrail-compute
+
+[contrail-analyticsdb]
+192.168.183.242
+192.168.183.243
+192.168.183.244
+
+[contrail-controllers]
+192.168.183.242
+192.168.183.243
+192.168.183.244
+
+[contrail-analytics]
+192.168.183.242
+192.168.183.243
+192.168.183.244
+
+[contrail-kubernetes]
+192.168.183.242
+192.168.183.243
+192.168.183.244
+
+[contrail-compute]
+192.168.183.206
+192.168.183.207
+192.168.183.208
+
+[all:vars]
+ansible_srvr_ip=192.168.183.245
+ansible_srvr_port=9003
+ansible_user=root
+ansible_password=p@ssw0rd
+
+docker_registry=192.168.183.245:5100
+contrail_version=4.0.2.0-35
+
+cloud_orchestrator=kubernetes
+
+controller_image=192.168.183.245:5100/contrail-controller-ubuntu14.04:4.0.2.0-35
+analytics_image=192.168.183.245:5100/contrail-analytics-ubuntu14.04:4.0.2.0-35
+analyticsdb_image=192.168.183.245:5100/contrail-analyticsdb-ubuntu14.04:4.0.2.0-35
+agent_image=192.168.183.245:5100/contrail-agent-ubuntu14.04:4.0.2.0-35
+
+docker_network_bridge=False
+contrail_compute_mode=container
+
+global_config={'analytics_ip': '192.168.183.218', 'controller_ip': '192.168.183.218', 'config_ip': '192.168.183.218'}
+analytics_api_config={'aaa_mode': 'no-auth'}
+
+ha={'contrail_external_vip': '192.168.183.218'}
+```
+
+
 # Appendix C Playbook
 
-## C.1 controller-pre-deploy.yml
+## C.1 common-pre-deploy.yml
 ```
 ---
-- name: Pre-depoyment for controller node
-  hosts:
-    - contrail-controllers
-    - contrail-analytics
-    - contrail-analyticsdb
-  tasks:
-    - name: Add private repo
-      yum_repository:
-        name: private
-        description: private
-        baseurl: http://{{ ansible_srvr_ip }}/private
-        enabled: yes
-        gpgcheck: no
-        priority: 99
+- name: Add private repo
+  yum_repository:
+    name: private
+    description: private
+    baseurl: http://{{ ansible_srvr_ip }}/private
+    enabled: yes
+    gpgcheck: no
+    priority: 99
 
-    - name: Install NTP
-      yum:
-        name: ntp
-        state: latest
+- name: Install NTP
+  yum:
+    name: ntp
+    state: latest
 
-    - name: Configure local NTP
-      copy:
-        src: ntp.conf
-        dest: /etc/ntp.conf
-        force: yes
+- name: Configure local NTP
+  copy:
+    src: ntp.conf
+    dest: /etc/ntp.conf
+    force: yes
 
-    - name: Restart NTP
-      systemd:
-        name: ntpd
-        state: restarted
+- name: Restart NTP
+  systemd:
+    name: ntpd
+    state: restarted
 
-    - name: Install Docker
-      yum:
-        name: docker
-        state: latest
+- name: Remove /etc/timezone directory
+  file:
+    path: /etc/timezone
+    state: absent
 
-    - name: Create /etc/docker directory
-      file: dest=/etc/docker state=directory
-
-    - name: Build daemon.json
-      vars:
-        daemon_json:
-          { "insecure-registries": ["{{docker_registry | trim}}"] }
-      copy: dest=/etc/docker/daemon.json content="{{ daemon_json }}"
-
-    - name: Enable and start docker
-      systemd:
-        name: docker
-        enabled: yes
-        state: restarted
-
-    - name: Remove /etc/timezone directory
-      file:
-        path: /etc/timezone
-        state: absent
-
-    - name: Copy /etc/timezone file
-      vars:
-        timezone: "America/Los_Angeles"
-      copy: dest=/etc/timezone content="{{ timezone }}"
-
+- name: Copy /etc/timezone file
+  vars:
+    timezone: "America/Los_Angeles"
+  copy: dest=/etc/timezone content="{{ timezone }}"
 ```
 
 ntp.conf
@@ -663,21 +802,50 @@ fudge 127.127.1.0 stratum 8
 ```
 
 
-## C.2 upgrade-kernel.yml
+## C.2 controller-pre-deploy.yml
 ```
 ---
-- name: Upgrade kernel on compute
-  hosts: contrail-compute
-
+- name: Contrail controller node pre-deployment
+  hosts:
+    - contrail-controllers
+    - contrail-analytics
+    - contrail-analyticsdb
   tasks:
-    - name: Add private repo
-      yum_repository:
-        name: private
-        description: private
-        baseurl: http://{{ ansible_srvr_ip }}/private
+    - import_tasks: common-pre-deploy.yml
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: Create /etc/docker directory
+      file: dest=/etc/docker state=directory
+
+    - name: Add Docker registry
+      template:
+        src: daemon.json.js2
+        dest: /etc/docker/daemon.json
+
+    - name: Enable and start docker
+      systemd:
+        name: docker
         enabled: yes
-        gpgcheck: no
-        priority: 99
+        state: restarted
+```
+
+daemon.json.js2
+```
+{ "insecure-registries": ["192.168.189.143:44380", "{{ docker_registry }}"]}
+```
+
+
+## C.3 compute-pre-deploy.yml
+```
+---
+- name: OpenStack compute node pre-deployment
+  hosts: contrail-compute
+  tasks:
+    - import_tasks: common-pre-deploy.yml
 
     - name: Upgrade kernel
       yum:
@@ -728,42 +896,15 @@ fudge 127.127.1.0 stratum 8
         - kernel-devel-3.10.0-514.21.1.el7
         - kernel-headers-3.10.0-514.21.1.el7
 
-    - name: Install NTP
-      yum:
-        name: ntp
-        state: latest
-
-    - name: Configure local NTP
-      copy:
-        src: ntp.conf
-        dest: /etc/ntp.conf
-        force: yes
-
-    - name: Restart NTP
-      systemd:
-        name: ntpd
-        state: restarted
-
     - name: Upgrade python-docker-py
       yum:
         name: python-docker-py
         state: latest
 
-    - name: Remove /etc/timezone directory
-      file:
-        path: /etc/timezone
-        state: absent
-
-    - name: Copy /etc/timezone file
-      vars:
-        timezone: "America/Los_Angeles"
-      copy: dest=/etc/timezone content="{{ timezone }}"
-
-    - name: Update /etc/docker/daemon.json
-      copy:
-        src: daemon.json
+    - name: Add Docker registry
+      template:
+        src: daemon.json.js2
         dest: /etc/docker/daemon.json
-        force: yes
 
     - name: Restart docker
       systemd:
@@ -784,16 +925,10 @@ fudge 127.127.1.0 stratum 8
       file:
         name: /tmp/vrouter-port-control
         state: absent
-
-```
-
-daemon.json
-```
-{ "insecure-registries": ["192.168.189.143:44380", "192.168.183.245:5100"]}
 ```
 
 
-## C.3 controller.yml
+## C.4 controller.yml
 ```
 ---
 - name: Common system settings on base hosts
@@ -845,7 +980,7 @@ daemon.json
 ```
 
 
-## C.4 compute-add.yml
+## C.5 compute-add.yml
 ```
 ---
 - name: Common system settings on base hosts
@@ -921,6 +1056,190 @@ daemon.json
       when:
         - (contrail_compute_mode == 'bare_metal' or contrail_compute_mode == 'container')
         - (provision_type == '')
+```
+
+
+## C.6 slave-pre-deploy.yml
+```
+---
+- name: Kubernetes slave node pre-deployment
+  hosts: contrail-compute
+  tasks:
+    - import_tasks: common-pre-deploy.yml
+
+    - name: Upgrade kernel
+      yum:
+        name: kernel-3.10.0-514.21.1.el7
+
+    - name: Reboot node after kernel upgrade
+      shell: sleep 5 && /sbin/shutdown -r now
+      async: 1
+      poll: 0
+      ignore_errors: true
+
+    - name: Waiting for server to come back
+      local_action: >
+        wait_for
+        port=22
+        host={{ inventory_hostname }}
+        state=started
+        delay=30
+        timeout=600
+
+    - name: Install kernel-devel and kernel-headers
+      yum: pkg={{item}}
+      with_items:
+        - kernel-devel-3.10.0-514.21.1.el7
+        - kernel-headers-3.10.0-514.21.1.el7
+
+    - name: Upgrade python-docker-py
+      yum:
+        name: python-docker-py
+        state: latest
+
+    - name: Stop and disable flannel
+      systemd:
+        name: flannel
+        enabled: no
+        state: stopped
+
+    - name: Update docker.service to remove flannel
+      copy:
+        src: docker.service
+        dest: /usr/lib/systemd/system/docker.service
+        force: yes
+
+    - name: Add Docker registry
+      template:
+        src: daemon.json.js2
+        dest: /etc/docker/daemon.json
+
+    - name: Reload service
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart docker
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Install CNI
+      yum:
+        name: contrail-kube-cni
+        state: latest
+
+    - name: Update /etc/kubernetes/kubelet
+      command: sed -i -e 's/NODE_HOSTNAME/#NODE_HOSTNAME/' /etc/kubernetes/kubelet
+
+    - name: Update /usr/lib/systemd/system/kublet
+      copy:
+        src: kubelet.service
+        dest: /usr/lib/systemd/system/kubelet.service
+        force: yes
+
+    - name: Update /etc/kubernetes/kubelet
+      template:
+        src: kubelet.js2
+        dest: /etc/kubernetes/kubelet
+
+    - name: Reload service
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart kubelet
+      systemd:
+        name: kubelet
+        state: restarted
+```
+
+docker.service
+```
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.com
+After=network.target
+Requires=
+
+[Service]
+Type=notify
+EnvironmentFile=-/etc/kubernetes/docker
+WorkingDirectory=/usr/bin
+ExecStart=/usr/bin/dockerd $DOCKER_OPT_BIP $DOCKER_OPT_MTU $DOCKER_OPTS
+LimitNOFILE=1048576
+LimitNPROC=1048576
+
+[Install]
+WantedBy=multi-user.target
+```
+
+kubelet.js2 
+```
+# --logtostderr=true: log to standard error instead of files
+KUBE_LOGTOSTDERR="--logtostderr=false"
+
+#  --v=0: log level for V logs
+KUBE_LOG_LEVEL="--v=4"
+KUBELET_LOG_DIR="--log-dir=/var/log/kubernetes/"
+
+# --address=0.0.0.0: The IP address for the Kubelet to serve on (set to 0.0.0.0 for all interfaces)
+NODE_ADDRESS="--address={{ inventory_hostname }}"
+
+# --port=10250: The port for the Kubelet to serve on. Note that "kubectl logs" will not work if you set this flag.
+NODE_PORT="--port=10250"
+
+# --hostname-override="": If non-empty, will use this string as identification instead of the actual hostname.
+#NODE_HOSTNAME="--hostname-override={{ inventory_hostname }}"
+
+# --api-servers=[]: List of Kubernetes API servers for publishing events,
+# and reading pods and services. (ip:port), comma separated.
+KUBELET_API_SERVER="--api-servers=192.168.183.217:18080"
+
+# --allow-privileged=false: If true, allow containers to request privileged mode. [default=false]
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+
+# DNS info
+KUBELET__DNS_IP="--cluster-dns=192.168.3.100"
+KUBELET_DNS_DOMAIN="--cluster-domain=cluster.local"
+
+# Add your own!
+KUBELET_ARGS="--image-gc-low-threshold=5"
+KUBELET_CNI="--network-plugin=cni"
+KUBELET_CNI_CONF="--cni-conf-dir=/etc/cni/net.d"
+KUBELET_CNI_BIN="--cni-bin-dir=/opt/cni/bin"
+
+KUBELET_INFRA="--pod-infra-container-image=192.168.189.143:44380/gcr.io/google_containers/pause-amd64:3.0"
+```
+
+kubelet.service 
+```
+[Unit]
+Description=Kubernetes Kubelet
+After=docker.service
+Requires=docker.service
+
+[Service]
+EnvironmentFile=-/etc/kubernetes/kubelet
+ExecStart=/usr/bin/kubelet    ${KUBE_LOGTOSTDERR}     \
+                    ${KUBE_LOG_LEVEL}       \
+                    ${NODE_ADDRESS}         \
+                    ${NODE_PORT}            \
+                    ${NODE_HOSTNAME}        \
+                    ${KUBELET_API_SERVER}   \
+                    ${KUBE_ALLOW_PRIV}      \
+                    ${KUBELET__DNS_IP}      \
+                    ${KUBELET_DNS_DOMAIN}      \
+                    ${KUBELET_LOG_DIR}          \
+                    ${KUBELET_ARGS} \
+    ${KUBELET_CNI} \
+    ${KUBELET_CNI_CONF} \
+    ${KUBELET_CNI_BIN} \
+                    --cadvisor-port 4194    \
+                    ${KUBELET_INFRA}
+Restart=on-failure
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 
