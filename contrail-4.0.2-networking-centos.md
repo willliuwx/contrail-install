@@ -40,28 +40,29 @@ The current latest kernel is 3.10.0-693.5.2.el7. Compiling vrouter kernel module
 
 Contrail 4.0.2.0-35 with Ubuntu 14.04 based contailer is used in this guide.
 
-On exiting compute node where nova-compute in container and Docker 1.12.5 are installed, when tried with Contrail vrouter agent in Ubuntu 16.04 based container, it doesn't seem working well with Docker 1.12.5. CentOS crash was observed. It may be caused by such combination. When tried with upgrading to Docker CE 17.09.0-ce, nova-controller can't schedule task on the compute node. Not sure about the root cause.
-
 Contrail Packages
 ```
 contrail-server-manager-installer_4.0.2.0-35~mitaka_all.deb
     registry.tar.gz
+contrail-vrouter-compiler-centos7-4.0.2.0-35.tar.gz
 contrail-networking-docker_4.0.2.0-35_trusty.tgz
+    contrail-networking-thirdparty_4.0.2.0-35.tgz
+    contrail-networking-tools_4.0.2.0-35.tgz
+        contrail-ansible-4.0.2.0-35.tar.gz
+        contrail-docker-tools_4.0.2.0-35_all.deb
+    contrail-networking-dependents_4.0.2.0-35.tgz
     contrail-docker-images_4.0.2.0-35.tgz
         contrail-analytics-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-controller-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-analyticsdb-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-lb-ubuntu14.04-4.0.2.0-35.tar.gz
-    contrail-networking-dependents_4.0.2.0-35.tgz
     contrail-networking-openstack-extra_4.0.2.0-35.tgz
-    contrail-networking-thirdparty_4.0.2.0-35.tgz
-    contrail-networking-tools_4.0.2.0-35.tgz
-        contrail-ansible-4.0.2.0-35.tar.gz
-        contrail-docker-tools_4.0.2.0-35_all.deb
     contrail-neutron-plugin-packages_4.0.2.0-35.tgz
     contrail-vrouter-packages_4.0.2.0-35.tgz
 contrail-kubernetes-docker_4.0.2.0-35_trusty.tgz
+    contrail-networking-thirdparty_4.0.2.0-35.tgz
+    contrail-networking-tools_4.0.2.0-35.tgz
     contrail-kubernetes-dependents_4.0.2.0-35.tgz
     contrail-kubernetes-docker-images_4.0.2.0-35.tgz
         contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
@@ -71,15 +72,44 @@ contrail-kubernetes-docker_4.0.2.0-35_trusty.tgz
         contrail-kube-manager-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-kubernetes-agent-ubuntu14.04-4.0.2.0-35.tar.gz
         contrail-lb-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-vcenter-docker_4.0.2.0-35_trusty.tgz
     contrail-networking-thirdparty_4.0.2.0-35.tgz
     contrail-networking-tools_4.0.2.0-35.tgz
-contrail-vrouter-compiler-centos7-4.0.2.0-35.tar.gz
+    contrail-vcenter-dependents_4.0.2.0-35.tgz
+    contrail-vcenter-docker-images_4.0.2.0-35.tgz
+        contrail-analytics-ubuntu14.04-4.0.2.0-35.tar.gz
+        contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
+        contrail-lb-ubuntu14.04-4.0.2.0-35.tar.gz
+        contrail-analyticsdb-ubuntu14.04-4.0.2.0-35.tar.gz
+        contrail-controller-ubuntu14.04-4.0.2.0-35.tar.gz
+        contrail-vcenter-plugin-ubuntu14.04-4.0.2.0-35.tar.gz
+    contrail-vcenter-vrouter-packages_4.0.2.0-35.tgz
 ```
+
+#### Note
+On exiting compute node where nova-compute in container and Docker 1.12.5 are installed, when tried with Contrail vrouter agent in Ubuntu 16.04 based container, it doesn't seem working well with Docker 1.12.5 on CentOS 7.2 with kernel 3.10.0-514.21.1.el7. Vrouter agent was not configured by internal playbook, so it failed to start and caused container keep restarting. When looking into this issue, CentOS crash was observed. It may be caused by such combination. When tried with upgrading to Docker CE 17.09.0-ce, nova-controller can't schedule task on the compute node. Not sure about the root cause. Hence Ubuntu 14.04 based container is used.
+
+#### Note
+On Contrail controller node, Ubuntu 14.04 based containers don't start with Docker CE or Docker Engine 1.13.1 (tested with docker-engine-1.13.1.cs1-1.el7.centos.x86_64 and cs8). They work fine with 1.12.6.cs13-1.el7.centos.x86_64. Ubuntu 16.04 based containers work fine with Docker CE 17.09.0.ce.1.el7.centos.
+
+#### Note
+In case upgrade or downgrade Docker, existing Docker has to be erased and /var/lib/docker has to be removed. Otherwise, leftovers in /var/lib/docker (probably metadata) will cause issues.
+
+
+## 1.3 Load Balance
+
+LB to Contrail is not required by Contrail services. It's required by whoever needs to access Contrail service (API). Hence LB is not part of Contrail production solution.
+
+* Integration with OpenStack, OpenStack LB will be updated to access Contrail configuration and analytics API. Internally, the LB is used by Neutron Contrail plugin.
+
+* Integration with Kubernetes, Contrail CNI connects to local vrouter agent to get required configuration to plugin container. So LB is not required.
+
+* Integration with vCenter (vcenter-only), LB is not required.
 
 
 # 2 Builder
 
-The builder basically holds container image registry and run Ansible playbook to deploy the cluster. It's recommended to use Server Manager for deployment. With Contrail 4.0.2, CentOS is not supported to install Server Manager. The builder has to be manually built.
+The builder holds container image registry and run Ansible playbook to deploy Contrail. It's recommended to use Server Manager for deployment. With Contrail 4.0.2, CentOS is not supported to install Server Manager. The builder has to be manually built.
 
 Disable firewall.
 ```
@@ -209,8 +239,34 @@ docker run -d --env REGISTRY_HTTP_ADDR=0.0.0.0:5100 \
 ```
 
 Push images to registry.
+
+Images to integrate with OpenStack.
 ```
-push-images
+contrail-controller-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analytics-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analyticsdb-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-vrouter-compiler-centos7-4.0.2.0-35.tar.gz
+```
+
+Images to integrate with Kubernetes.
+```
+contrail-controller-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analytics-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analyticsdb-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-vrouter-compiler-centos7-4.0.2.0-35.tar.gz
+contrail-kube-manager-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-kubernetes-agent-ubuntu14.04-4.0.2.0-35.tar.gz
+```
+
+Images to integrate with vCenter.
+```
+contrail-controller-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analytics-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-analyticsdb-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-agent-ubuntu14.04-4.0.2.0-35.tar.gz
+contrail-vcenter-plugin-ubuntu14.04-4.0.2.0-35.tar.gz
 ```
 
 List images in registry.
@@ -259,12 +315,7 @@ Three containers will be deployed on each controller node. They can be deployed 
 * analyticsdb
 
 
-## 4.1.2 Load Balancer Node
-
-Contrail LB node is not required. OpenStack load balancer will be used for Contrail as well.
-
-
-## 4.1.3 Compute/Vrouter Node
+## 4.1.2 Compute/Vrouter Node
 
 On each compute node, OVS kernel module and all related services have to be removed. The data network interface can't be on any bridge. It can be bonding interface, physical interface or logical/VLAN interface.
 
@@ -470,6 +521,9 @@ ansible-playbook -i inventory/openstack.ini compute-add.yml
 
 No need to update nova.conf for nova-compute. Contrail VIF is already supported by OpenStack. Only need to copy vrouter-port-control to nova-compute container, which is done as part of pre-deployment.
 
+#### Note
+/usr/bin/make is missing in contrail-vrouter-compiler-centos7-4.0.2.0-35.tar.gz container. To work around it, playbooks/roles/node/tasks/agent.yml is patched to copy /usr/bin/make from host into the container. https://bugs.launchpad.net/opencontrail/+bug/1736193
+
 
 # 5 Kubernetes
 
@@ -484,12 +538,7 @@ Four containers will be deployed on each controller node. They can be deployed o
 * kube-manager
 
 
-## 5.1.2 Load Balancer Node
-
-Contrail LB node is not required. The existing LB will be updated to support Contrail VIP.
-
-
-## 5.1.3 Slave/Vrouter Node
+## 5.1.2 Slave/Vrouter Node
 
 On each slave node, flannel networking has to be removed. The data network interface can't be on any bridge. It can be bonding interface, physical interface or logical/VLAN interface.
 
@@ -570,7 +619,8 @@ ansible-playbook -i inventory/kubernetes.ini controller.yml
 ```
 
 #### Note
-There is a bug in kube-manager container. The internal-playbook doesn't build supervisor files for kube-manager. Because kube-manager didn't start, the container keeps restarting. Need to manually copy supervisord_kubernetes.conf and supervisord_kubernetes_files into container to make it work.
+There is a bug in kube-manager Ubuntu 14.04 based container. The internal-playbook doesn't build supervisor files for kube-manager. Because kube-manager didn't start, the container keeps restarting. Need to manually copy supervisord_kubernetes.conf and supervisord_kubernetes_files into container /etc/contrail directory to make it work.
+https://bugs.launchpad.net/opencontrail/+bug/1736065
 
 
 ### 5.4.2 Add Slave Node
