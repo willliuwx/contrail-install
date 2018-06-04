@@ -171,6 +171,7 @@ systemctl restart ntpd
 oadm policy add-cluster-role-to-user cluster-admin admin
 htpasswd -bc /etc/origin/master/htpasswd admin contrail123
 ```
+In case of HA, this has to be done on all masters.
 
 #### 3 Check OpenShift web UI.
 
