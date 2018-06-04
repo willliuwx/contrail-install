@@ -118,7 +118,7 @@ Customize cloud image.
 
 ## 4.1 Inventory
 
-* [inventory file]() for 1 master and 1 node (infra and user together) on single network
+* [inventory file](#a1-1-master-and-1-node-on-single-network) for 1 master and 1 node (infra and user together) on single network
 * [inventory file]() for 3 masters and 2 nodes (1 infra node and 1 user node) on single network
 * [inventory file]() for 1 master and 1 node (infr and user together) on separated management and OpenShift networks
 * [inventory file]() for 3 masters and 2 nodes (1 infra node and 1 user node) on separated management and OpenShift networks
@@ -144,6 +144,7 @@ yum repolist
 
 ## 4.3 Run playbooks
 
+```
 ansible-playbook \
     -i inventory/byo/poc.yml \
     inventory/byo/ose-prerequisites.yml
@@ -155,6 +156,7 @@ ansible-playbook \
 ansible-playbook \
     -i inventory/byo/poc.yml \
     playbooks/byo/config.yml
+```
 
 
 ## 4.4 Post-deployment
@@ -174,7 +176,7 @@ htpasswd -bc /etc/origin/master/htpasswd admin contrail123
 
 Open "https://<master address>:8443" to access OpenShift web UI.
 
-#### 4 Enable distributed SNAT for k8s-default-pod-network. This is the network for all unisolated namespaces.
+#### 4 Enable distributed SNAT for k8s-default-pod-network.
 
 * Update namespace 'default' with this annotation.
 ```
