@@ -78,7 +78,7 @@ This installs Ansible 2.4.2.0 from rhel-7-server-extras-rpms/x86_64.
 
 Download playbook package contrail-openshift-deployer-5.0.0-0.40.tgz from Juniper download site, and unpack it on the builder.
 
-A few updates are required to the playbook. Get [openshift-ansible-5.0.0-40.patch](openshift/openshift-ansible-5.0.0-40.patch) and apply to the original playbook.
+A few updates are required to the playbook. Get [openshift-ansible-5.0.0-40.patch](https://github.com/tonyliu0592/contrail-install/raw/master/openshift/openshift-ansible-5.0.0-40.patch) and apply to the original playbook.
 ```
 tar xzf contrail-openshift-deployer-5.0.0-0.40.tgz
 patch -p0 < openshift-ansible-5.0.0-40.patch
