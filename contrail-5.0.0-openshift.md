@@ -63,7 +63,7 @@ Install Ansible and required packages. Ansible version has to be 2.4.2.0.
 
 #### CentOS
 ```
-yum install ansible python-netaddr
+yum install ansible python-netaddr patch
 ```
 This installs Ansible 2.4.2.0 from extras/7/x86_64. Don't install EPEL repo on builder, because Ansible from EPEL is 2.5.3.
 
@@ -119,7 +119,7 @@ Customize cloud image.
 ## 4.1 Inventory
 
 * [inventory file](#a1-1-master-and-1-node-on-single-network) for 1 master and 1 node (infra and user together) on single network
-* [inventory file]() for 3 masters and 2 nodes (1 infra node and 1 user node) on single network
+* [inventory file](#a2-3-masters-and-2-nodes-on-single-network) for 3 masters and 2 nodes (1 infra node and 1 user node) on single network
 * [inventory file]() for 1 master and 1 node (infr and user together) on separated management and OpenShift networks
 * [inventory file]() for 3 masters and 2 nodes (1 infra node and 1 user node) on separated management and OpenShift networks
 
@@ -356,6 +356,7 @@ openshift_enable_service_catalog=false
 openshift_use_openshift_sdn=false
 os_sdn_network_plugin_name='cni'
 openshift_disable_check=disk_availability,package_version,docker_storage
+
 openshift_use_contrail=true
 contrail_version=5.0
 contrail_container_tag=5.0.0-0.40
@@ -377,6 +378,64 @@ vrouter_gateway=10.84.29.254
 ```
 
 ## A.2 3 masters and 2 nodes on single network
+```
+[OSEv3:children]
+masters
+nodes
+etcd
+lb
+
+[OSEv3:vars]
+ansible_ssh_user=root
+ansible_become=yes
+debug_level=2
+#deployment_type=origin
+deployment_type=openshift-enterprise
+openshift_release=v3.7
+containerized=false
+openshift_install_examples=true
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+osm_cluster_network_cidr=10.32.0.0/12
+openshift_portal_net=10.96.0.0/12
+openshift_use_dnsmasq=true
+openshift_clock_enabled=true
+openshift_hosted_manage_registry=true
+openshift_hosted_manage_router=true
+openshift_enable_service_catalog=false
+openshift_use_openshift_sdn=false
+os_sdn_network_plugin_name='cni'
+openshift_disable_check=disk_availability,package_version,docker_storage
+
+openshift_use_contrail=true
+contrail_version=5.0
+contrail_container_tag=5.0.0-0.40
+contrail_registry=10.87.68.165:5100
+#contrail_registry=hub.juniper.net/contrail
+#contrail_registry_username=<username>
+#contrail_registry_password=<password>
+vrouter_physical_interface=eth0
+vrouter_gateway=10.84.29.254
+
+[lb]
+10.84.29.96 openshift_hostname=b7vm96
+
+[masters]
+10.84.29.97 openshift_hostname=b7vm97
+10.84.29.98 openshift_hostname=b7vm98
+10.84.29.99 openshift_hostname=b7vm99
+
+[etcd]
+10.84.29.97 openshift_hostname=b7vm97
+10.84.29.98 openshift_hostname=b7vm98
+10.84.29.99 openshift_hostname=b7vm99
+
+[nodes]
+10.84.29.97 openshift_hostname=b7vm97
+10.84.29.98 openshift_hostname=b7vm98
+10.84.29.99 openshift_hostname=b7vm99
+10.84.29.100 openshift_hostname=b7vm100 openshift_node_labels="{'region': 'infra'}"
+10.84.29.101 openshift_hostname=b7vm101
+```
 
 ## A.3 1 master and 1 node on separated management and OpenShift networks
 
@@ -421,5 +480,29 @@ for img in $img_list; do
     docker rmi -f hub.juniper.net/contrail/$img
     docker rmi -f localhost.localdomain:5100/$img
 done
+```
+
+```
+#!/bin/bash
+
+docker pull 10.87.68.165:5100/contrail-nodemgr:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-kubernetes-kube-manager:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-external-zookeeper:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-external-rabbitmq:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-external-kafka:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-external-cassandra:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-webui-web:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-webui-job:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-control-named:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-control-dns:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-control-control:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-config-svcmonitor:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-config-schema:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-config-devicemgr:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-controller-config-api:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-analytics-query-engine:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-analytics-collector:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-analytics-api:5.0.0-0.40
+docker pull 10.87.68.165:5100/contrail-analytics-alarm-gen:5.0.0-0.40
 ```
 
