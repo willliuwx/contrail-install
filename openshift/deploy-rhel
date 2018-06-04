@@ -1,0 +1,178 @@
+#!/bin/bash
+
+#host_list="10.84.29.99 10.84.29.100"
+#name_list="b7vm99 b7vm100"
+#node_list="10.84.29.100"
+
+host_list="
+    10.84.29.96
+    10.84.29.97
+    10.84.29.98
+    10.84.29.99
+    10.84.29.100
+    10.84.29.101"
+name_list="
+    b7vm96
+    b7vm97
+    b7vm98
+    b7vm99
+    b7vm100
+    b7vm101"
+node_list="
+    10.84.29.100
+    10.84.29.101"
+
+#inventory=cluster-b7-2n.yaml
+inventory=cluster-b7-ha.yaml
+
+username=
+password=
+
+wait_for_host()
+{
+    while [ 1 ]; do
+        ping -c 1 -W 10 $host > /dev/null
+        if [ $? == 0 ]; then
+            echo "$host is running"
+            break
+        else
+            echo "wait for $host"
+            sleep 10
+        fi
+    done
+    while [ 1 ]; do
+        ssh -q $host "echo check" > /dev/null
+        if [ $? == 0 ]; then
+            echo "$host SSH is ready"
+            break
+        else
+            echo "wait for $host SSH"
+            sleep 10
+        fi
+    done
+}
+
+build_vm()
+{
+    for name in $name_list; do
+        ssh -q root@10.84.29.8 ./vm delete $name
+        ssh -q root@10.84.29.8 ./vm create $name redhat
+    done
+    for host in $host_list; do
+        wait_for_host
+    done
+}
+
+upgrade_kernel()
+{
+    for host in $node_list; do
+        scp -q kernel-3.10.0-693.21.1.el7.x86_64.rpm ${host}:.
+        ssh -q $host yum install -y kernel-3.10.0-693.21.1.el7.x86_64.rpm
+        ssh -q $host rm -f kernel-3.10.0-693.21.1.el7.x86_64.rpm
+        ssh -q $host reboot
+    done
+    sleep 30
+    for host in $node_list; do
+        wait_for_host
+    done
+}
+
+create_hosts_file()
+{
+    cat << __EOT__ > hosts
+127.0.0.1 localhost.contrail.juniper.net localhost
+
+10.84.29.96  b7vm96.contrail.juniper.net  b7vm96
+10.84.29.97  b7vm97.contrail.juniper.net  b7vm97
+10.84.29.98  b7vm98.contrail.juniper.net  b7vm98
+10.84.29.99  b7vm99.contrail.juniper.net  b7vm99
+10.84.29.100 b7vm100.contrail.juniper.net b7vm100
+10.84.29.101 b7vm101.contrail.juniper.net b7vm101
+10.84.29.102 b7vm102.contrail.juniper.net b7vm102
+__EOT__
+}
+
+create_daemon_json_file()
+{
+    cat << __EOT__ > daemon.json
+{ "insecure-registries": ["10.87.68.165:5100"]}
+__EOT__
+}
+
+copy_daemon_json()
+{
+    create_daemon_json_file
+    for host in $host_list; do
+        scp -q daemon.json $host:/etc/docker/
+        ssh -q $host systemctl restart docker
+    done
+    rm -f daemon.json
+}
+
+create_sub_script()
+{
+    cat << __EOT__ > sub
+#!/bin/bash
+subscription-manager register \\
+    --username $username \\
+    --password $password \\
+    --force
+id=\$(subscription-manager list --available --matches 'Red Hat OpenShift*' | \\
+    grep "Pool ID" | \\
+    head -n 1 | \\
+    awk '{ print \$3 }')
+subscription-manager attach --pool=\$id
+subscription-manager repos --disable "*"
+subscription-manager repos \\
+    --enable rhel-7-server-rpms \\
+    --enable rhel-7-server-extras-rpms \\
+    --enable rhel-7-server-ose-3.7-rpms \\
+    --enable rhel-7-fast-datapath-rpms
+__EOT__
+    chmod +x sub
+}
+
+pre_deploy()
+{
+    create_sub_script
+    create_hosts_file
+    for host in $host_list; do
+        scp -q sub $host:.
+        ssh -q $host ./sub
+        ssh -q $host rm -f sub
+        scp hosts $host:/etc/
+    done
+    rm -f hosts
+    rm -f sub
+
+    upgrade_kernel
+}
+
+run_prerequisite()
+{
+    cd openshift-ansible
+    ansible-playbook \
+        -i inventory/byo/$inventory \
+        inventory/byo/ose-prerequisites.yml
+    cd ..
+}
+
+run_config()
+{
+    cd openshift-ansible
+    ansible-playbook \
+        -i inventory/byo/$inventory \
+        playbooks/byo/openshift_facts.yml
+    ansible-playbook \
+        -i inventory/byo/$inventory \
+        playbooks/byo/config.yml
+    cd ..
+}
+
+build_vm
+pre_deploy
+run_prerequisite
+copy_daemon_json
+run_config
+
+
