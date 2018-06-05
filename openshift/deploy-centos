@@ -1,9 +1,41 @@
 #!/bin/bash
 
-host_list="10.84.29.98 10.84.29.101"
-name_list="b7vm98 b7vm101"
-node_list="10.84.29.101"
+#host_list="10.84.29.98 10.84.29.101"
+#name_list="b7vm98 b7vm101"
+#node_list="10.84.29.101"
 
+#host_list="
+#    10.87.68.171
+#    10.87.68.174"
+#name_list="
+#    5b4vm171
+#    5b4vm174"
+#node_list="
+#    10.87.68.174"
+
+host_list="
+    10.84.29.96
+    10.84.29.97
+    10.84.29.98
+    10.84.29.99
+    10.84.29.100
+    10.84.29.101"
+name_list="
+    b7vm96
+    b7vm97
+    b7vm98
+    b7vm99
+    b7vm100
+    b7vm101"
+node_list="
+    10.84.29.100
+    10.84.29.101"
+
+#inventory=cluster-b7-2n.yaml
+#inventory=cluster-5b4-2n.yaml
+inventory=cluster-b7-ha.yaml
+hypervisor=10.84.29.8
+#hypervisor=10.87.68.136
 
 wait_for_host()
 {
@@ -32,8 +64,8 @@ wait_for_host()
 build_vm()
 {
     for name in $name_list; do
-        ssh -q root@10.84.29.8 ./vm delete $name
-        ssh -q root@10.84.29.8 ./vm create $name centos
+        ssh -q root@$hypervisor ./vm delete $name
+        ssh -q root@$hypervisor ./vm create $name centos
     done
     for host in $host_list; do
         wait_for_host
@@ -57,6 +89,12 @@ create_hosts_file()
 {
     cat << __EOT__ > hosts
 127.0.0.1 localhost.contrail.juniper.net localhost
+
+10.87.68.171 5b4vm171.contrail.juniper.net 5b4vm171
+10.87.68.174 5b4vm174.contrail.juniper.net 5b4vm174
+
+172.16.0.171 5b4vm171-os.contrail.juniper.net 5b4vm171-os
+172.16.0.174 5b4vm174-os.contrail.juniper.net 5b4vm174-os
 
 10.84.29.96  b7vm96.contrail.juniper.net  b7vm96
 10.84.29.97  b7vm97.contrail.juniper.net  b7vm97
@@ -102,7 +140,7 @@ run_prerequisite()
 {
     cd openshift-ansible
     ansible-playbook \
-        -i inventory/byo/cluster-b7-2n.yaml \
+        -i inventory/byo/$inventory \
         inventory/byo/ose-prerequisites.yml
     cd ..
 }
@@ -111,10 +149,10 @@ run_config()
 {
     cd openshift-ansible
     ansible-playbook \
-        -i inventory/byo/cluster-b7-2n.yaml \
+        -i inventory/byo/$inventory \
         playbooks/byo/openshift_facts.yml
     ansible-playbook \
-        -i inventory/byo/cluster-b7-2n.yaml \
+        -i inventory/byo/$inventory \
         playbooks/byo/config.yml
     cd ..
 }
