@@ -1,9 +1,9 @@
 
 # 1 Overview
 
-This guide is to deploy OpenShift 3.7 and Contrail Networking 5.0. All hosts are VM based on cloud image in this guide.
+This guide is to deploy OpenShift 3.7 and Contrail Networking 5.0.0. All hosts are VM based on cloud image in this guide.
 
-Contrail containers are hosted on Juniper registry and are validated with OpenShift Enterprise on RHEL. Send email to contrail-registry@juniper.net to request username and password.
+Contrail containers are all based on CentOS 7.4 and hosted on Juniper registry. Send email to contrail-registry@juniper.net to request username and password.
 
 #### CentOS
 The deployment is OpenShift Origin 3.7 on CentOS 7.4. Cloud image is CentOS-7-x86_64-GenericCloud-1711.qcow2.
@@ -341,8 +341,8 @@ etcd
 ansible_ssh_user=root
 ansible_become=yes
 debug_level=2
-#deployment_type=origin
-deployment_type=openshift-enterprise
+deployment_type=origin
+#deployment_type=openshift-enterprise
 openshift_release=v3.7
 containerized=false
 openshift_install_examples=true
@@ -390,8 +390,8 @@ lb
 ansible_ssh_user=root
 ansible_become=yes
 debug_level=2
-#deployment_type=origin
-deployment_type=openshift-enterprise
+deployment_type=origin
+#deployment_type=openshift-enterprise
 openshift_release=v3.7
 containerized=false
 openshift_install_examples=true
