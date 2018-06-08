@@ -146,15 +146,15 @@ yum repolist
 
 ```
 ansible-playbook \
-    -i inventory/byo/poc.yml \
+    -i inventory/byo/<inventory file> \
     inventory/byo/ose-prerequisites.yml
 
 ansible-playbook \
-    -i inventory/byo/poc.yml \
+    -i inventory/byo/<inventory file> \
     playbooks/byo/openshift_facts.yml
 
 ansible-playbook \
-    -i inventory/byo/poc.yml \
+    -i inventory/byo/<inventory file> \
     playbooks/byo/config.yml
 ```
 
@@ -215,7 +215,8 @@ status:
   phase: Active
 ```
 
-* On Contrail web UI, update Configure -> Global Config -> Virtual Routers -> Forwarding Options to set "SNAT Port Translation Pools". For example, TCP 51000 - 52000, UDP 52000 - 53000.
+* Configure source port for SNAT.
+Open Contrail web UI "https://<master>:8143". On Contrail web UI, update Configure -> Global Config -> Virtual Routers -> Forwarding Options to set "SNAT Port Translation Pools". For example, TCP 51000 - 52000, UDP 52000 - 53000.
 
 #### 5 On all nodes (not masters), add an iptables rule after KUBE rules.
 ```
@@ -362,6 +363,7 @@ openshift_use_contrail=true
 contrail_version=5.0
 contrail_container_tag=5.0.0-0.40
 contrail_registry=10.87.68.165:5100
+#contrail_registry=hub.juniper.net/contrail
 #contrail_registry_username=<username>
 #contrail_registry_password=<password>
 vrouter_physical_interface=eth0
