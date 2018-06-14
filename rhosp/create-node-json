@@ -1,0 +1,74 @@
+#!/bin/sh
+
+host[1]=10.84.29.5
+host[2]=10.84.29.6
+host[3]=10.84.29.7
+json_file=/home/stack/control-node.json
+
+role_list="
+    control
+    contrail-controller
+    contrail-analytics
+    contrail-analytics-database"
+
+add_node()
+{
+    mac=$(virsh -c qemu+ssh://root@$addr/system domiflist $vm | \
+        awk '/br1/''{ print $5}')
+
+    if [ $first == 1 ]; then
+        cat << __EOT__ >> $json_file
+    {
+__EOT__
+        first=0
+    else
+        cat << __EOT__ >> $json_file
+    },
+    {
+__EOT__
+    fi
+
+    cat << __EOT__ >> $json_file
+        "name": "$vm",
+        "pm_type": "pxe_ssh",
+        "mac":[
+            "$mac"
+        ],
+        "capabilities": "profile:$role,boot_option:local",
+        "pm_addr": "$addr",
+        "pm_user": "root",
+        "pm_password": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpQIBAAKCAQEAqVWiIAEOoJmer5ClQ7CYayKW7GyAo5PDIawVfYwbhCnLCE+6\nNOqShjZRfVpKKiFCd62Rth852GUujwvI3OGSaGxiBvmjdUIRWaYPeCTDQdxwslme\nAxIkGW6ZweMuq244ZXbs1KnPNh0+XWXPhznanOOGL47lTj1kztXizgmSGSbDT8s7\n+G4OjEY8JHhEsGS9EART0Xn+gJtBQHJq/Cx5iKDTifQy7okneDQgxA7dvuSYTXnu\nR43ffCEYb2sgsFX0ZRrwgh/AxNzXcr1gmiAMV+xoE8P68m2gHJLkDCn+vqrCbY86\nNWf86d4G9zNr2QRJFXTlhtI98NTCbtyeD4PgjQIDAQABAoIBAQCZqJlbzVnGpl/3\nFJzDFebZoSOvGq6IwTcawRsnOBJoFbylqCNijVG09GlyBJK0NEYqb5h/2UoWcYqU\nR69XsGG43FD/31xStUclQKlc7o84np6tWOEoDDgx08k2xb691WDbwdUbDZR4mITV\nH+P346nbICPN2C+Alfl6L2CGcuzeYHKFKO2H97NwyFSmDDJtTK/8OXasvON9d27Z\n/+/knZE5Fi+yc2dnGB5iFI0YX2WvvlTLPSltUua7t9BWcKp3qHHb3qMtT3QE4MB/\nGgQPpK/+aLqhbLbC9jeJDlXyMJn3CpXkDp7i/Em+/l/L+kqGY+qoehDJtnQiwfCC\nXO17HDaJAoGBANN+VHKu4Kv/DSCEBGMSMMl9jxfcGX33tzqe1uOJYidMHFME9+5U\naUjDrTi1OGssTWFkcCPlg3dyBfTU383Me2yrQ12AMwFkDgjDJwlt7WNCm6Yp3t3u\nV+0vxoRWH0cQyald5dpTU6CtQ5Up6sZOuaErl2zVF9qwXiM/Od1/JV//AoGBAMz4\nGMBqcYTZby+XHc+v0lDF+pb1dNG6cT6GnR0aWTQIKGmmdDbrapWcVKGYRGOc+2zm\nzwC5KouEHaccZS4pOV+LawxonWOgZLd1WegAS6EWywyd2eLKxsh+n+bvuO19SRqV\nD9J3k4+Pc2xkyF+PaYzr4p1LL1r9fZtwj8CA5j9zAoGBAIBvTGtkxe3NcrRXV66u\nYlBKXraXpCd6YpxHz6nYSXIh52WHM+VY/6L/qdcxPjTfb5KAgxVZkO/dn75h9BOv\nZRjGHJ/QdakXkOpDURaJ2kqYLZvH+5782gqhI8ZD4rSufjjLXAWs6rE95zfTf860\nCkjVBx1Bfz4AMvrmr4ZSa2kTAoGBAKJzR/rI4mvugSbw2FnQ+hm2r+ORayMGZ9as\njj2Qsn6AsLb7jEQy1Wj6XEEvE5T3yHYJgKsMFuI4td/Kq46ocaZ+MzvEdmmNqAWX\nZshv44ErNYcsXJJZMK+bXFSGTsU7dQMyfTXMPBGeGlcgkYbbfUaJdjRAcKnnGvRl\nhCmIf/RtAoGAbTbA3wepjAnNeGAVaamjRx+JTAu80h1bhpWqCqozsnxQd6ddTzpj\n9UbD3VuTKWWF6tF2TANhL6JOSZWXfc73yJ6n2rvSWJ/CCSrb74oVZhVpO5PWbK4a\noCigDAgr0hycmijxHTXhUSXokzKbmTjIJznTEWxMLCJ+QdZp7UV76CE=\n-----END RSA PRIVATE KEY-----"
+__EOT__
+}
+
+inspect_host()
+{
+    cat << __EOT__ > $json_file
+{
+"nodes": [
+__EOT__
+
+    first=1
+    for idx in 1 2 3; do
+        addr=${host[$idx]}
+        for role in $role_list; do
+            if [ $role == "control" ]; then
+                vm=controller-$idx
+            else
+                vm=$role-$idx
+            fi
+            add_node
+        done
+    done
+
+    cat << __EOT__ >> $json_file
+    }
+]
+}
+__EOT__
+}
+
+inspect_host
+
+
+

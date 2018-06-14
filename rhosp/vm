@@ -1,0 +1,67 @@
+#!/bin/bash
+
+role_list="
+    control
+    contrail-controller
+    contrail-analytics
+    contrail-analytics-database"
+
+
+create_vm()
+{
+    idx=$1
+    for role in $role_list; do
+        if [ $role == "control" ]; then
+            vm=controller-$idx
+        else
+            vm=$role-$idx
+        fi
+        virsh vol-create-as lv $vm 80G
+        virsh define /dev/stdin << __EOT__
+$(virt-install --connect qemu:///system \
+    --virt-type kvm \
+    --os-variant rhel7 \
+    --name $vm --vcpus 6 --ram 32768 \
+    --disk bus=virtio,vol=lv/$vm,cache=none \
+    -w bridge=br1,model=virtio \
+    -w bridge=br0,model=virtio \
+    --graphics vnc,listen=0.0.0.0 --noautoconsole \
+    --print-xml )
+__EOT__
+    done
+}
+
+delete_vm()
+{
+    idx=$1
+    for role in $role_list; do
+        if [ $role == "control" ]; then
+            vm=controller-$idx
+        else
+            vm=$role-$idx
+        fi
+        virsh destroy $vm
+        virsh undefine $vm
+        virsh vol-delete $vm lv
+    done
+}
+
+help()
+{
+    echo "$0 [create | delete] [1 2 3]"
+}
+
+if [ -z $2 ]; then
+    help
+else
+    if [ $1 == "create" ]; then
+        create_vm $2
+    elif [ $1 == "delete" ]; then
+        delete_vm $2
+    else
+        help
+    fi
+fi
+
+exit 0
+

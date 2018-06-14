@@ -1,0 +1,41 @@
+#!/bin/bash
+
+source /home/stack/stackrc
+json_file=/home/stack/control-node.json
+
+import()
+{
+    openstack baremetal import --json $json_file
+    openstack baremetal configure boot
+
+    for node in $(openstack baremetal node list -c UUID -f value); do
+        openstack baremetal node manage $node
+    done
+
+    openstack overcloud node introspect --all-manageable --provide
+    openstack baremetal node list
+}
+
+delete()
+{
+    for node in $(openstack baremetal node list -c UUID -f value); do
+        openstack baremetal node delete $node
+    done
+}
+
+
+help()
+{
+    echo "$0 [ import | delete ]"
+}
+
+if [ $1 == "import" ]; then
+    import
+elif [ $1 == "delete" ]; then
+    delete
+else
+    help
+fi
+
+exit 0
+

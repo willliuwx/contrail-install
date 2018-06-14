@@ -1,0 +1,32 @@
+#!/bin/bash
+
+source /home/stack/stackrc
+templates=/home/stack/tripleo-heat-templates
+
+multi()
+{
+openstack overcloud deploy \
+  --templates $templates \
+  --roles-file $templates/environments/contrail/roles_data.yaml \
+  -e $templates/environments/puppet-pacemaker.yaml \
+  -e $templates/environments/contrail/contrail-services.yaml \
+  -e $templates/environments/contrail/network-isolation.yaml \
+  -e $templates/environments/contrail/contrail-net.yaml \
+  -e $templates/environments/contrail/ips-from-pool-all.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
+}
+
+single()
+{
+openstack overcloud deploy \
+  --templates $templates/ \
+  --roles-file $templates/environments/contrail/roles_data.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml \
+  -e $templates/environments/contrail/contrail-services.yaml \
+  -e $templates/environments/contrail/contrail-net-single.yaml
+}
+
+multi
+
