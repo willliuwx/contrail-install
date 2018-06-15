@@ -8,21 +8,21 @@ This guide is to build a cluster of RHOSP 10 and Contrail 4.1.1 on 7 physical se
 
 ## 2.1 Physical server
 
-* 3 controller hosts for hosting undercloud VM and overcloud controller VMs.
+* 3 controller hypervisors for hosting undercloud VM and overcloud controller VMs.
 * 4 compute nodes, 2 with kernel based Contrail vrouter and 2 with DPDP based.
 
 
 ## 2.2 VM
 
-The undercloud VM is on the first host controller.
+The undercloud VM is on the first controller hypervisor.
 
-On each controller host, there are 4 overcloud controller VMs.
+On each controller hypervisor, there are 4 overcloud controller VMs.
 * openstack-controller
 * contrail-controller
 * contrail-analytics
 * contrail-analytics-database
 
-VM spec. This is for poc/lab purpose. For production, have to follow the best practise.
+Here is the VM spec for poc/lab purpose. For production, the best practise has to be followed.
 ```
 openstack-controller          64GB   6    100GB
 contrail-controller           48GB   6    100GB
@@ -37,62 +37,99 @@ Note, AppFormix controller VM will be built separately.
 
 ## 2.3 Network
 
-* IPMI, management, external-api
+* external-api
+  This is for accessing the server for management, troubeshoot, web UI, etc.
 * provisioning
+  This is for supporting PXE boot. Due to some L2 services (DHCP, TFTP, etc.), this network has to be on native untagged VLAN.
 * internal-api
+  This is for all API traffic.
 * tenant
+  This is for tunnel, XMPP and BGP traffic. L2 and L3 gateway has to be reachable from this network.
 * storage
 * storage-management
+* management
+  This is usually not required.
 
 
 ## 2.4 Network configuration
 
-### 2.4.1 Controller host
+### 2.4.1 Production
 
-Each controller host has 2 interfaces connecting to underlay network. The interface can be single NIC or bond interface.
+For bandwidth isolation in production, it's recommended to have 3 separated interfaces (bond is prefered) for internal-api, tenant and storage. All other networks can be on the same interface. Here is an example.
+
+Controller hypervisor
 ```
-br1 on eno1  -> provisiong
-br1.10       -> management
-br1.20       -> external-api
-br2 on bond0 -> internal-api
-br2.30       -> tenant
-br2.40       -> storage
-br2.50       -> storage-management
+br0 on eno1  -> provisiong
+br0.10       -> external-api
+br0.20       -> storage-management
+br1 on bond0 -> internal-api
+br2 on bond1 -> tenant
+br3 on bond2 -> storage
 ```
 
-### 2.4.2 Compute node
+Overcloud VM
+```
+eth0    -> privisioning
+eth0.10 -> external-api
+eth0.20 -> storage-management
+eth1    -> internal-api
+eth2    -> tenant
+eth3    -> storage
+```
 
-Each compute node has 2 interfaces connecting to underlay network. The interface can be single NIC or bond interface.
+Compute node
 ```
 eno1     -> provisiong
-eno1.10  -> management
-eno1.20  -> external-api
+eno1.10  -> external-api
+eno1.20  -> storage-management
 bond0    -> internal-api
-bond0.30 -> tenant (vhost0)
-bond0.40 -> storage
-bond0.50 -> storage-management
+bond1    -> tenant
+bond2    -> storage
 ```
 
-### 2.4.3 Undercloud VM
 
-The undercloud VM has one NIC on `br1`.
+### 2.4.2 PoC/Lab
+
+As the mininum requirement, one interface will work. Normally, for PoC/Lab deployment, it would be good to have 2 interfaces. Each interface can be either physical NIC or bond interface. Here is an example.
+
+Controller hypervisor
+```
+br0 on eno1  -> provisiong
+br0.10       -> external-api
+br1 on bond0 -> internal-api
+br1.20       -> tenant
+br1.30       -> storage
+br1.40       -> storage-management
+```
+
+Overcloud VM
 ```
 eth0    -> privisioning
-eth0.10 -> management
-```
-
-### 2.4.4 Overcloud VM
-
-The overcloud VM has two NICs on `br1` and `br2`.
-```
-eth0    -> privisioning
-eth0.10 -> management
-eth0.20 -> external-api
+eth0.10 -> external-api
 eth1    -> internal-api
-eth1.30 -> tenant
-eth1.40 -> storage
-eth1.50 -> storage-management
+eth1.20 -> tenant
+eth1.30 -> storage
+eth1.40 -> storage-management
 ```
+`eth0` and `eth1` are on bridge `br0` and `br1` respectively.
+
+Compute node
+```
+eno1     -> provisiong
+eno1.10  -> external-api
+bond0    -> internal-api
+bond0.20 -> tenant (vhost0)
+bond0.30 -> storage
+bond0.40 -> storage-management
+```
+
+Undercloud VM
+```
+eth0    -> privisioning
+eth0.10 -> external-api
+```
+`eth0` is on bridge `br0`.
+
 
 # 3 Build undercloud
 
@@ -194,12 +231,6 @@ cp -r /usr/share/contrail-tripleo-puppet/* \
     usr/share/openstack-puppet/modules/tripleo/
 ```
 
-#### Upload Puppet modules to Swift.
-```
-tar czf puppet-modules.tgz usr
-upload-swift-artifacts -f puppet-modules.tgz
-```
-
 #### Install Heat templates.
 ```
 cp -r /usr/share/openstack-tripleo-heat-templates tripleo-heat-templates
@@ -213,6 +244,14 @@ cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
 
 
 # 6 Update environments
+
+## 6.1 Node placement
+
+Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/node_placement.html)
+
+Update `contrail-services.yaml`, set flavor to `baremetal` for all roles.
+
+
 
 
 
