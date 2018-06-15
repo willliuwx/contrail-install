@@ -38,16 +38,27 @@ Note, AppFormix controller VM will be built separately.
 ## 2.3 Network
 
 * external-api
+
   This is for accessing the server for management, troubeshoot, web UI, etc.
+
 * provisioning
+
   This is for supporting PXE boot. Due to some L2 services (DHCP, TFTP, etc.), this network has to be on native untagged VLAN.
+
 * internal-api
+
   This is for all API traffic.
+
 * tenant
+
   This is for tunnel, XMPP and BGP traffic. L2 and L3 gateway has to be reachable from this network.
+
 * storage
+
 * storage-management
+
 * management
+
   This is usually not required.
 
 
