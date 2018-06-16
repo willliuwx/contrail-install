@@ -71,8 +71,8 @@ For bandwidth isolation in production, it's recommended to have 3 separated inte
 Controller hypervisor
 ```
 br0 on eno1  -> provisiong
-br0.10       -> external-api
-br0.20       -> storage-management
+vlan10@br0   -> external-api
+vlan20@br0   -> storage-management
 br1 on bond0 -> internal-api
 br2 on bond1 -> tenant
 br3 on bond2 -> storage
@@ -80,22 +80,22 @@ br3 on bond2 -> storage
 
 Overcloud VM
 ```
-eth0    -> privisioning
-eth0.10 -> external-api
-eth0.20 -> storage-management
-eth1    -> internal-api
-eth2    -> tenant
-eth3    -> storage
+eth0        -> privisioning
+vlan10@eth0 -> external-api
+vlan20@eth0 -> storage-management
+eth1        -> internal-api
+eth2        -> tenant
+eth3        -> storage
 ```
 
 Compute node
 ```
-eno1     -> provisiong
-eno1.10  -> external-api
-eno1.20  -> storage-management
-bond0    -> internal-api
-bond1    -> tenant
-bond2    -> storage
+eno1        -> provisiong
+vlan10@eno1 -> external-api
+vlan20@eno1 -> storage-management
+bond0       -> internal-api
+bond1       -> tenant
+bond2       -> storage
 ```
 
 
@@ -106,38 +106,38 @@ As the mininum requirement, one interface will work. Normally, for PoC/Lab deplo
 Controller hypervisor
 ```
 br0 on eno1  -> provisiong
-br0.10       -> external-api
+vlan10@br0   -> external-api
 br1 on bond0 -> internal-api
-br1.20       -> tenant
-br1.30       -> storage
-br1.40       -> storage-management
+vlan20@br1   -> tenant
+vlan30@br1   -> storage
+vlan40@br1   -> storage-management
 ```
 
 Overcloud VM
 ```
-eth0    -> privisioning
-eth0.10 -> external-api
-eth1    -> internal-api
-eth1.20 -> tenant
-eth1.30 -> storage
-eth1.40 -> storage-management
+eth0        -> privisioning
+vlan10@eth0 -> external-api
+eth1        -> internal-api
+vlan20@eth1 -> tenant
+vlan30@eth1 -> storage
+vlan40@eth1 -> storage-management
 ```
 `eth0` and `eth1` are on bridge `br0` and `br1` respectively.
 
 Compute node
 ```
-eno1     -> provisiong
-eno1.10  -> external-api
-bond0    -> internal-api
-bond0.20 -> tenant (vhost0)
-bond0.30 -> storage
-bond0.40 -> storage-management
+eno1         -> provisiong
+vlan10@eno1  -> external-api
+bond0        -> internal-api
+vlan20@bond0 -> tenant (vhost0)
+vlan30@bond0 -> storage
+vlan40@bond0 -> storage-management
 ```
 
 Undercloud VM
 ```
-eth0    -> privisioning
-eth0.10 -> external-api
+eth0        -> privisioning
+vlan10@eth0 -> external-api
 ```
 `eth0` is on bridge `br0`.
 
@@ -254,31 +254,48 @@ cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
 ```
 
 
-# 6 Update environments
+# 6 Customize environments
 
 ## 6.1 Node placement
 
 Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/node_placement.html)
 
-Update `contrail-services.yaml`, set flavor to `baremetal` for all roles.
+* Update `contrail-services.yaml`, set flavor to `baremetal` for all roles.
+* Set property for each node when creating the node JSON file. See [create-node-json](rhosp/create-node-json).
+* Configure the mapping in scheduler-hints.yaml and add it into deploy command.
 
 
+## 6.2 Neutron address
 
+```
+external:           10.84.29.0/24
+internal-api:       172.16.10.0/24
+tenant:             172.16.12.0/24
+storage:            172.16.14.0/24
+storage-management: 172.16.16.0/24
+```
+
+
+## 6.3 Static address
+
+Static address for each network is configured in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
 
 # 7 Deploy overcloud
 
 ```
 openstack overcloud deploy \
-  --templates tripleo-heat-templates \
-  --roles-file tripleo-heat-templates/environments/contrail/roles_data.yaml \
-  -e tripleo-heat-templates/environments/puppet-pacemaker.yaml \
-  -e tripleo-heat-templates/environments/contrail/contrail-services.yaml \
-  -e tripleo-heat-templates/environments/contrail/network-isolation.yaml \
-  -e tripleo-heat-templates/environments/contrail/contrail-net.yaml \
-  -e tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml \
-  -e tripleo-heat-templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
-  -e tripleo-heat-templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
+  --templates $templates \
+  --roles-file $templates/environments/contrail/roles_data.yaml \
+  -e $templates/environments/puppet-pacemaker.yaml \
+  -e $templates/environments/contrail/contrail-services.yaml \
+  -e $templates/environments/contrail/hostname-map.yaml \
+  -e $templates/environments/contrail/scheduler-hints.yaml \
+  -e $templates/environments/contrail/network-isolation.yaml \
+  -e $templates/environments/contrail/contrail-net.yaml \
+  -e $templates/environments/contrail/ips-from-pool-all.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
+  -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
 ```
 
 
