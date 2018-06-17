@@ -267,18 +267,27 @@ Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack
 
 ## 6.2 Neutron address
 
+For instances, Neutron port is created and address is allocated from specified allocation pool. In case of dynamical address, the Neutron address is provided to instance by DHCP.
+
+Update `tripleo-heat-templates/environments/contrail/contrail-net.yaml` to define each network CIDR and allocation pool. This will override the default in `tripleo-heat-templates/network/<network>.yaml`.
+
+* Space 1 - 10 is reserved for bridge on controller hypervisor.
+* Space 11- 100 is reserved for static address.
+* Space 101 - 200 is the allocation pool for dynamical allocation.
+* Space 201 - 250 is reserved for VIP address.
+
 ```
 external:           10.84.29.0/24
-internal-api:       172.16.10.0/24
-tenant:             172.16.12.0/24
-storage:            172.16.14.0/24
-storage-management: 172.16.16.0/24
+internal-api:       172.16.10.0/24  172.16.10.101 - 172.16.10.200
+tenant:             172.16.12.0/24  172.16.12.101 - 172.16.12.200
+storage:            172.16.14.0/24  172.16.14.101 - 172.16.14.200
+storage-management: 172.16.16.0/24  172.16.16.101 - 172.16.16.200
 ```
 
 
 ## 6.3 Static address
 
-Static address for each network is configured in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
+In case of static address, the Neutron address won't take any effect, instead, the static address will be configured into instance. Static address is configured in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
 Static control plane address is not currently supported. Here is the [blueprint](https://blueprints.launchpad.net/tripleo/+spec/tripleo-predictable-ctlplane-ips).
 
