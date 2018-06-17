@@ -272,29 +272,28 @@ For instances, Neutron port is created and address is allocated from specified a
 Update `tripleo-heat-templates/environments/contrail/contrail-net.yaml` to define each network CIDR and allocation pool. This will override the default in `tripleo-heat-templates/network/<network>.yaml`.
 
 * Space 1 - 10 is reserved for bridge on controller hypervisor.
-* Space 11- 100 is reserved for static address.
-* Space 101 - 200 is the allocation pool for dynamical allocation.
+* Space 11 - 200 is the allocation pool for dynamical allocation.
 * Space 201 - 250 is reserved for VIP address.
 
 ```
 external:           10.84.29.0/24
-internal-api:       172.16.10.0/24  172.16.10.101 - 172.16.10.200
-tenant:             172.16.12.0/24  172.16.12.101 - 172.16.12.200
-storage:            172.16.14.0/24  172.16.14.101 - 172.16.14.200
-storage-management: 172.16.16.0/24  172.16.16.101 - 172.16.16.200
+internal-api:       172.16.10.0/24  172.16.10.11 - 172.16.10.200
+tenant:             172.16.12.0/24  172.16.12.11 - 172.16.12.200
+storage:            172.16.14.0/24  172.16.14.11 - 172.16.14.200
+storage-management: 172.16.16.0/24  172.16.16.11 - 172.16.16.200
 ```
 
 
 ## 6.3 Static address
 
-In case of static address, the Neutron address won't take any effect, instead, the static address will be configured into instance. Static address is configured in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
+In case of static address, Neutron port and address won't be allocated, instead, the static address will be configured into instance. Static address is defined in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
 Static control plane address is not currently supported. Here is the [blueprint](https://blueprints.launchpad.net/tripleo/+spec/tripleo-predictable-ctlplane-ips).
 
 
 ## 6.4 Redis VIP
 
-Redis VIP has to be specified, due to this bug [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
+Redis VIP can't be the same as the InternalApiVirtualFixedIPs. If it's not specified, it will be allocated from allocation pool. That may cause address collision with static address, in case static address and allocation pool are in the same space. To avoid conflict, two options here, 1) specify it in `ips-from-pool-all.yaml`, 2) isolate static address space and allocation pool. Here is a bug for this. [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
 
 
 # 7 Deploy overcloud
