@@ -280,6 +280,13 @@ storage-management: 172.16.16.0/24
 
 Static address for each network is configured in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
+Static control plane address is not currently supported. Here is the [blueprint](https://blueprints.launchpad.net/tripleo/+spec/tripleo-predictable-ctlplane-ips).
+
+
+## 6.4 Redis VIP
+
+Redis VIP has to be specified, due to this bug [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
+
 
 # 7 Deploy overcloud
 
@@ -296,6 +303,13 @@ openstack overcloud deploy \
   -e $templates/environments/contrail/ips-from-pool-all.yaml \
   -e $templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
   -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
+```
+
+# 8 Troubleshoot
+
+List stack failures and details.
+```
+openstack stack failures list overcloud
 ```
 
 
