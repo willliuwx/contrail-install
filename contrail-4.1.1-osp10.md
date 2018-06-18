@@ -258,6 +258,35 @@ cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
 
 ## 6.1 Node placement
 
+The following roles are defined in `tripleo-heat-templates/environments/contrail/roles_data.yaml`.
+```
+Controller
+Compute
+BlockStorage
+ObjectStorage
+CephStorage
+ContrailController
+ContrailAnalytics
+ContrailAnalyticsDatabase
+ContrailTsn
+ContrailDpdk
+```
+
+When deploy a role, Nova looks for the flavor for that role, which is defined in `tripleo-heat-templates/environments/contrail/contrail-services.yaml`.
+```
+OvercloudControlFlavor
+OvercloudComputeFlavor
+OvercloudContrailControllerFlavor
+OvercloudContrailAnalyticsFlavor
+OvercloudContrailAnalyticsDatabaseFlavor
+OvercloudContrailTsnFlavor
+OvercloudContrailDpdkFlavor
+```
+
+For profile based node placement, a flavor is create for each role, and a profile is tagged to the role and the set of nodes for this role. When deploy a role, Nova gets the flavor, finds the profile tag, matches the set of nodes by profile tag, and selects a node for the role.
+
+For specific node placement, flavor `baremetal` is used for all roles. A `node:<node name>` is tagged on each node. Scheduler hint for each role is defined in `scheduler-hints.yaml`. When deploy a role, Nova takes flavor `baremetal`, checks sceduler hints, gets the exact node by index.
+
 Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/node_placement.html)
 
 * Update `contrail-services.yaml`, set flavor to `baremetal` for all roles.
@@ -265,7 +294,14 @@ Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack
 * Configure the mapping in scheduler-hints.yaml and add it into deploy command.
 
 
-## 6.2 Neutron address
+## 6.2 Hostname
+
+By default, the hostname (instance name) is `%stackname%-{{role.name.lower()}}-%index%`. Create `HostnameMap` to customize hostname.
+
+Note, script in `install_vrouter_kmod.yaml` assumes compute hostname is the default format and takes the second element to determine the role. Don't customize hostname for compute node, TSN and DPDK.
+
+
+## 6.3 Neutron address
 
 For instances, Neutron port is created and address is allocated from specified allocation pool. In case of dynamical address, the Neutron address is provided to instance by DHCP.
 
@@ -284,14 +320,14 @@ storage-management: 172.16.16.0/24  172.16.16.11 - 172.16.16.200
 ```
 
 
-## 6.3 Static address
+## 6.4 Static address
 
 In case of static address, Neutron port and address won't be allocated, instead, the static address will be configured into instance. Static address is defined in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
 Static control plane address is not currently supported. Here is the [blueprint](https://blueprints.launchpad.net/tripleo/+spec/tripleo-predictable-ctlplane-ips).
 
 
-## 6.4 Redis VIP
+## 6.5 Redis VIP
 
 Redis VIP can't be the same as the InternalApiVirtualFixedIPs. If it's not specified, it will be allocated from allocation pool. That may cause address collision with static address, in case static address and allocation pool are in the same space. To avoid conflict, two options here, 1) specify it in `ips-from-pool-all.yaml`, 2) isolate static address space and allocation pool. Here is a bug for this. [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
 
