@@ -303,7 +303,18 @@ Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack
 
 By default, the hostname (instance name) is `%stackname%-{{role.name.lower()}}-%index%`. Create `HostnameMap` to customize hostname.
 
-Note, script in `install_vrouter_kmod.yaml` check hostname map to find out the role and assumes compute role is `NovaCompute`. If no hostname map for compute node, the script extracts role name from hostname. Due to this issue, 1) don't do hostname map for compute node, and 2) set default hostname for role `Compute` in `roles_data.yaml`.
+Note, script in `install_vrouter_kmod.yaml` check hostname map to find out the role and assumes compute role is `NovaCompute`. If no hostname map for compute node, the script extracts role name from hostname. Need to fix it.
+```
+@@ -315,7 +315,7 @@
+                 reboot
+               fi
+             fi
+-            if [[ `echo $role |awk -F"-" '{print $2}'` == "novacompute" || `echo $role |awk -F"-" '{print $2}'` == "contrailtsn" ]]; then
++            if [[ `echo $role |awk -F"-" '{print $2}'` == "compute" || `echo $role |awk -F"-" '{print $2}'` == "contrailtsn" ]]; then
+               if [[ `echo $role |awk -F"-" '{print $2}'` == "contrailtsn" ]]; then
+                 phy_int=${phy_tsn_int}
+                 vlan_parent=${vlan_tsn_parent
+```
 
 
 ## 6.3 Neutron address
