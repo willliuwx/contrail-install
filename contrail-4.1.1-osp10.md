@@ -176,27 +176,32 @@ sudo yum install -y python-tripleoclient
 ```
 
 #### Configure undercloud.
+Copy and update undercloud.conf.
 ```
 cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf
 ```
 
+#### Install undercloud
 ```
 openstack undercloud install
 ```
-In case of configuration update in undercloud.conf, has to rerun install.
+In case that undercloud.conf is updated after undercloud installation, has to rerun installation to apply the updates.
 
 
-#### Install images.
+#### Install and upload images.
 ```
 sudo yum install -y rhosp-director-images rhosp-director-images-ipa
 for i in \
     /usr/share/rhosp-director-images/overcloud-full-latest-10.0.tar \
     /usr/share/rhosp-director-images/ironic-python-agent-latest-10.0.tar; \
     do tar -C images -xvf $i; done
+source stackrc
 openstack overcloud image upload --image-path /home/stack/images/
 ```
 
 #### Set DNS server.
+
+Set DNS server for provisioning network.
 ```
 openstack subnet list
 openstack subnet set \
@@ -206,21 +211,7 @@ openstack subnet set \
 ```
 
 
-# 4 Build overcloud nodes
-
-## 4.1 Define VM
-
-Run `virt-install` on each controller host to define VM. See script [create-overcloud-vm](rhosp/create-overcloud-vm) and [vm](rhosp/vm).
-
-
-## 4.2 Import nodes
-
-Import all defined VMs and compute nodes into ironic service.
-
-See script [create-node-json](rhosp/create-node-json) and [node](rhosp/node).
-
-
-# 5 Install packages
+# 4 Install packages
 
 #### Create Contrail local repo with package `contrail-install-packages_4.1.1.0-12-newton_redhat7.tgz`.
 ```
@@ -252,6 +243,20 @@ cp -r /usr/share/contrail-tripleo-heat-templates/environments/contrail \
 cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
     tripleo-heat-templates/puppet/services/network
 ```
+
+
+# 5 Build overcloud nodes
+
+## 5.1 Define VM
+
+Run `virt-install` on each controller host to define VM. See script [create-overcloud-vm](rhosp/create-overcloud-vm) and [vm](rhosp/vm).
+
+
+## 5.2 Import nodes
+
+Import all defined VMs and compute nodes into ironic service.
+
+See script [create-node-json](rhosp/create-node-json) and [node](rhosp/node).
 
 
 # 6 Customize environments
@@ -298,7 +303,7 @@ Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack
 
 By default, the hostname (instance name) is `%stackname%-{{role.name.lower()}}-%index%`. Create `HostnameMap` to customize hostname.
 
-Note, script in `install_vrouter_kmod.yaml` assumes compute hostname is the default format and takes the second element to determine the role. Don't customize hostname for compute node, TSN and DPDK.
+Note, script in `install_vrouter_kmod.yaml` check hostname map to find out the role and assumes compute role is `NovaCompute`. If no hostname map for compute node, the script extracts role name from hostname. Due to this issue, 1) don't do hostname map for compute node, and 2) set default hostname for role `Compute` in `roles_data.yaml`.
 
 
 ## 6.3 Neutron address
