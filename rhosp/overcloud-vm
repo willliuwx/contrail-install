@@ -1,23 +1,55 @@
 #!/bin/bash
 
-create()
-{
-    host=$1
-    idx=$2
+hv[0]=10.84.29.5
+hv[1]=10.84.29.6
+hv[2]=10.84.29.7
 
-    scp /home/stack/rhosp/vm root@$host:.
-    ssh root@$host ./vm delete $idx
-    ssh root@$host ./vm create $idx
-    ssh root@$host rm -f vm
+list()
+{
+    for idx in 0 1 2; do
+        addr=${hv[$idx]}
+        echo "#### $addr"
+        virsh -c qemu+ssh://root@$addr/system list --all
+    done
 }
 
-create 10.84.29.5 0
-create 10.84.29.6 1
-create 10.84.29.7 2
+create()
+{
+    for idx in 0 1 2; do
+        addr=${hv[$idx]}
+        echo "#### $addr"
+        scp vm root@$addr:.
+        ssh root@$addr ./vm delete $idx
+        ssh root@$addr ./vm create $idx
+        ssh root@$addr rm -f vm
+    done
+    list
+}
 
-virsh -c qemu+ssh://root@10.84.29.5/system list --all
-virsh -c qemu+ssh://root@10.84.29.6/system list --all
-virsh -c qemu+ssh://root@10.84.29.7/system list --all
+delete()
+{
+    for idx in 0 1 2; do
+        addr=${hv[$idx]}
+        echo "#### $addr"
+        scp vm root@$addr:.
+        ssh root@$addr ./vm delete $idx
+        ssh root@$addr rm -f vm
+    done
+    list
+}
+
+help()
+{
+    echo "$0 [create | delete]"
+}
+
+if [ $1 == "create" ]; then
+    create
+elif [ $1 == "delete" ]; then
+    delete
+else
+    help
+fi
 
 exit 0
 
