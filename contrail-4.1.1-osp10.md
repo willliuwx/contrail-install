@@ -251,7 +251,7 @@ cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
 
 ## 5.1 Define VM
 
-Run `virt-install` on each controller host to define VM. See script [create-overcloud-vm](rhosp/create-overcloud-vm) and [vm](rhosp/vm).
+Run `virt-install` on each controller host to define VM. See script [overcloud-vm](rhosp/overcloud-vm) and [vm](rhosp/vm).
 
 
 ## 5.2 Import nodes
