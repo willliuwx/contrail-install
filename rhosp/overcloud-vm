@@ -1,0 +1,23 @@
+#!/bin/bash
+
+create()
+{
+    host=$1
+    idx=$2
+
+    scp /home/stack/rhosp/vm root@$host:.
+    ssh root@$host ./vm delete $idx
+    ssh root@$host ./vm create $idx
+    ssh root@$host rm -f vm
+}
+
+create 10.84.29.5 0
+create 10.84.29.6 1
+create 10.84.29.7 2
+
+virsh -c qemu+ssh://root@10.84.29.5/system list --all
+virsh -c qemu+ssh://root@10.84.29.6/system list --all
+virsh -c qemu+ssh://root@10.84.29.7/system list --all
+
+exit 0
+
