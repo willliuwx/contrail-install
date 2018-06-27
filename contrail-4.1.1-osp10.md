@@ -37,6 +37,8 @@ Note, AppFormix controller VM will be built separately.
 
 ## 2.3 Network
 
+Network space is determined by deployment size. The minimum prefix length of each network is 26.
+
 * external-api
 
   This is for accessing the server for management, troubeshoot, web UI, etc.
@@ -288,7 +290,7 @@ OvercloudContrailTsnFlavor
 OvercloudContrailDpdkFlavor
 ```
 
-For profile based node placement, a flavor is create for each role, and a profile is tagged to the role and the set of nodes for this role. When deploy a role, Nova gets the flavor, finds the profile tag, matches the set of nodes by profile tag, and selects a node for the role.
+For profile based node placement, a flavor is created for each role, and a profile is tagged to the role and the set of nodes for this role. When deploy a role, Nova gets the flavor, finds the profile tag, matches the set of nodes by profile tag, and selects a node for the role.
 
 For specific node placement, flavor `baremetal` is used for all roles. A `node:<node name>` is tagged on each node. Scheduler hint for each role is defined in `scheduler-hints.yaml`. When deploy a role, Nova takes flavor `baremetal`, checks sceduler hints, gets the exact node by index.
 
@@ -303,7 +305,7 @@ Reference: [Controlling Node Placement and IP Assignment](https://docs.openstack
 
 By default, the hostname (instance name) is `%stackname%-{{role.name.lower()}}-%index%`. Create `HostnameMap` to customize hostname.
 
-Note, script in `install_vrouter_kmod.yaml` check hostname map to find out the role and assumes compute role is `NovaCompute`. If no hostname map for compute node, the script extracts role name from hostname. Need to fix it.
+Note, script in `install_vrouter_kmod.yaml` checks hostname map to find out the role and assumes compute role is `NovaCompute`. If no hostname map for compute node, the script extracts role name from hostname. Need to fix it.
 ```
 @@ -315,7 +315,7 @@
                  reboot
@@ -317,15 +319,15 @@ Note, script in `install_vrouter_kmod.yaml` check hostname map to find out the r
 ```
 
 
-## 6.3 Neutron address
+## 6.3 Static address
 
-For instances, Neutron port is created and address is allocated from specified allocation pool. In case of dynamical address, the Neutron address is provided to instance by DHCP.
+For instances, Neutron port is created and address is allocated from specified allocation pool. In case of dynamical address, the address is provided to instance by DHCP.
 
 Update `tripleo-heat-templates/environments/contrail/contrail-net.yaml` to define each network CIDR and allocation pool. This will override the default in `tripleo-heat-templates/network/<network>.yaml`.
 
-* Space 1 - 10 is reserved for bridge on controller hypervisor.
-* Space 11 - 200 is the allocation pool for dynamical allocation.
-* Space 201 - 250 is reserved for VIP address.
+* Range 1 - 10 is reserved for bridge on controller hypervisor.
+* Range 11 - 200 is the allocation pool for dynamical allocation.
+* Range 201 - 250 is reserved for VIP address.
 
 ```
 external:           10.84.29.0/24
@@ -335,17 +337,88 @@ storage:            172.16.14.0/24  172.16.14.11 - 172.16.14.200
 storage-management: 172.16.16.0/24  172.16.16.11 - 172.16.16.200
 ```
 
-
-## 6.4 Static address
-
 In case of static address, Neutron port and address won't be allocated, instead, the static address will be configured into instance. Static address is defined in `tripleo-heat-templates/environments/contrail/ips-from-pool-all.yaml`.
 
 Static control plane address is not currently supported. Here is the [blueprint](https://blueprints.launchpad.net/tripleo/+spec/tripleo-predictable-ctlplane-ips).
 
 
-## 6.5 Redis VIP
+## 6.4 Redis VIP
 
 Redis VIP can't be the same as the InternalApiVirtualFixedIPs. If it's not specified, it will be allocated from allocation pool. That may cause address collision with static address, in case static address and allocation pool are in the same space. To avoid conflict, two options here, 1) specify it in `ips-from-pool-all.yaml`, 2) isolate static address space and allocation pool. Here is a bug for this. [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
+
+
+## 6.5 Build image for DPDK compute node
+
+When deploy DPDK compute node, vrouter packages have to installed before configure interfaces. But, because the system was not registered at that point, vrouter packages can't be installed during deployment. A customized image based on `overcloud-full.qcow2` with pre-installed vrouter packages is required for DPDK compute node deployment.
+
+#### Copy `overcloud-full.qcow2` to one of controller hypervisors.
+```
+scp ~/images/overcloud-full.qcow2 root@<hyperviosr>:/var/tmp
+```
+
+#### Create `/var/tmp/contrail.repo` on the hypervisor.
+```
+[Contrail]
+name=Contrail Repo
+baseurl=http://<undercloud>/contrail
+enabled=1
+gpgcheck=0
+protect=1
+metadata_expire=30
+```
+The undercloud address has to be reachable from the hypervisor.
+
+#### Create `/var/tmp/customize` on the hypervisor.
+```
+#!/bin/bash
+
+virt-customize \
+  -a /var/tmp/overcloud-full-dpdk.qcow2 \
+  --sm-credentials $username:password:$password \
+  --sm-register \
+  --sm-attach auto \
+  --run-command 'subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-10-rpms --enable=rhel-7-server-openstack-10-devtools-rpms' \
+  --upload /var/tmp/contrail.repo:/etc/yum.repos.d \
+  --run-command 'yum install -y contrail-vrouter-utils contrail-vrouter-dpdk contrail-vrouter-dpdk-init' \
+  --run-command 'rm -fr /var/cache/yum/*' \
+  --run-command 'yum clean all' \
+  --run-command 'rm -rf /etc/yum.repos.d/contrail.repo' \
+  --run-command 'subscription-manager unregister' \
+  --selinux-relabel
+```
+
+#### Enable execution bit and run it.
+```
+cd /tmp/customize
+chmod +x customize
+./customize
+```
+
+#### Copy DPDK image back to undercloud.
+```
+scp root@<hypervisor>:/var/tmp/overcloud-full-dpdk.qcow2 ~/images/
+```
+
+#### Add DPDK image to Glance.
+```
+openstack image create \
+  overcloud-full-dpdk \
+  --container-format bare \
+  --disk-format qcow2 \
+  --file /home/stack/images/overcloud-full-dpdk.qcow2
+
+kid=$(openstack image list | awk "/bm-deploy-kernel/"'{print $2}'); \
+rid=$(openstack image list | awk "/bm-deploy-ramdisk/"'{print $2}'); \
+openstack image set \
+  overcloud-full-dpdk \
+  --property kernel_id=$kid \
+  --property ramdisk_id=$rid
+```
+
+#### Update `contrail-services.yaml` to specify the image for DPDK role.
+```
+  ContrailDpdkImage: overcloud-full-dpdk
+```
 
 
 # 7 Deploy overcloud
