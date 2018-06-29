@@ -1,45 +1,225 @@
 #!/bin/bash
 
+img_path=/var/lib/libvirt/images
+img_file_redhat=$img_path/rhel-server-7.5-x86_64-kvm.qcow2
+
+declare -A cpu
+declare -A memory
+declare -A disk
+declare -A eth0_address
+declare -A eth0_netmask
+declare -A eth0_gateway
+declare -A eth1_address
+declare -A eth1_netmask
+declare -A eth1_gateway
+
+############################################
+cpu[undercloud]=6
+memory[undercloud]=32768
+disk[undercloud]=100G
+eth0_address[undercloud]=10.84.29.70
+eth0_netmask[undercloud]=255.255.255.0
+eth0_gateway[undercloud]=10.84.29.254
+eth1_address[undercloud]=172.16.1.70
+eth1_netmask[undercloud]=255.255.255.0
+
+cpu[appformix-0]=6
+memory[appformix-0]=32768
+disk[appformix-0]=100G
+eth0_address[appformix-0]=172.16.0.11
+eth0_netmask[appformix-0]=255.255.255.0
+eth1_address[appformix-0]=10.87.65.53
+eth1_netmask[appformix-0]=255.255.255.128
+eth1_gateway[appformix-0]=10.87.65.126
+
+cpu[appformix-1]=6
+memory[appformix-1]=32768
+disk[appformix-1]=100G
+eth0_address[appformix-1]=172.16.0.12
+eth0_netmask[appformix-1]=255.255.255.0
+eth1_address[appformix-1]=10.87.65.54
+eth1_netmask[appformix-1]=255.255.255.128
+eth1_gateway[appformix-1]=10.87.65.126
+
+cpu[appformix-2]=6
+memory[appformix-2]=32768
+disk[appformix-2]=100G
+eth0_address[appformix-2]=172.16.0.12
+eth0_netmask[appformix-2]=255.255.255.0
+eth1_address[appformix-2]=10.87.65.55
+eth1_netmask[appformix-2]=255.255.255.128
+eth1_gateway[appformix-2]=10.87.65.126
+
+
 role_list="
-    control
+    osp-controller
     contrail-controller
     contrail-analytics
     contrail-analytics-database"
 
 
-create_vm()
+vm_on_volume()
 {
-    idx=$1
-    for role in $role_list; do
-        if [ $role == "control" ]; then
-            vm=controller-$idx
-        else
-            vm=$role-$idx
-        fi
-        virsh vol-create-as lv $vm 80G
-        virsh define /dev/stdin << __EOT__
+    name=$1
+    virsh vol-create-as lv $name 120G
+    virsh define /dev/stdin << __EOT__
 $(virt-install --connect qemu:///system \
     --virt-type kvm \
     --os-variant rhel7 \
-    --name $vm --vcpus 6 --ram 32768 \
-    --disk bus=virtio,vol=lv/$vm,cache=none \
+    --name $name --vcpus 6 --ram 40960 \
+    --disk bus=virtio,vol=lv/$name,cache=none \
+    -w bridge=br0,model=virtio \
+    -w bridge=br1,model=virtio \
+    --graphics vnc,listen=0.0.0.0 --noautoconsole \
+    --print-xml )
+__EOT__
+}
+
+vm_on_disk()
+{
+    name=$1
+    qemu-img create -f qcow2 /var/lib/libvirt/instances/$name.qcow2 120G
+    virsh define /dev/stdin << __EOT__
+$(virt-install --connect qemu:///system \
+    --virt-type kvm \
+    --os-variant rhel7 \
+    --name $name --vcpus 6 --ram 32768 \
+    --disk /var/lib/libvirt/instances/$name.qcow2 \
     -w bridge=br1,model=virtio \
     -w bridge=br0,model=virtio \
     --graphics vnc,listen=0.0.0.0 --noautoconsole \
     --print-xml )
 __EOT__
-    done
 }
 
-delete_vm()
+create_config_common()
+{
+    name=$1
+
+    cat << __EOF__ > hosts
+127.0.0.1 localhost.contrail.juniper.net localhost
+${mgmt_address[$name]} $name.contrail.juniper.net $name
+__EOF__
+
+    cat << __EOF__ > ntp.conf
+driftfile /var/lib/ntp/drift
+server 10.84.5.100
+restrict 127.0.0.1
+restrict -6 ::1
+includefile /etc/ntp/crypto/pw
+keys /etc/ntp/keys
+__EOF__
+
+    cat << __EOF__ > authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxx+JfOb56uF2/4USg+4C6aVEmxRp37VC31uMdiNV65EMUmoyQoPLoVq1SBkbS1H+Bo24YWRisddTXvEGPxE7y92xvfm7xui/8QSjeC2LwaoslChe54zggwg3pkFexU/jD0cnsmBurVDKUCoKXMLILUsDzNSd7x8wgKhoygzBmHQCfzzlvGfeYzCxrJXOahW+gisYYZz4rN7kVGp3IpmhOxiVsB6+ylZMRX2l+jP09CZLRpRa72M6ampJBqHocG3uyVP5Ym9Ehed+Ag3PmyMD9N08P7rSbxaxdvCS1EJemeVSpGDAi11K9xnsCs+6Wv2M0Q1BmSTHUDQtv+ZEji7Oj root@vm100
+__EOF__
+}
+
+create_config_centos()
+{
+    name=$1
+
+    cat << __EOF__ > ifcfg-eth0
+DEVICE=eth0
+TYPE=Ethernet
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=${eth0_address[$name]}
+NETMASK=${eth0_netmask[$name]}
+DNS1=10.84.5.100
+DNS2=172.21.200.60
+DOMAIN="contrail.juniper.net juniper.net englab.juniper.net"
+__EOF__
+
+    cat << __EOF__ > ifcfg-eth1
+DEVICE=eth1
+TYPE=Ethernet
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=${eth1_address[$name]}
+NETMASK=${eth1_netmask[$name]}
+GATEWAY=${eth1_gateway[$name]}
+__EOF__
+}
+
+clean_config()
+{
+    rm -f hosts
+    rm -f ntp.conf
+    rm -f authorized_keys
+    rm -f ifcfg-eth0
+    rm -f ifcfg-eth1
+}
+
+create_volume()
+{
+    name=$1
+    size=$2
+
+    virsh vol-create-as lv $name $size
+}
+
+customize_redhat()
+{
+    name=$1
+
+    create_config_common $name
+    create_config_centos $name
+
+    virt-customize \
+        -a /dev/lv/$name \
+        --hostname $name \
+        --root-password password:c0ntrail123 \
+        --upload hosts:/etc \
+        --run-command 'sed -i "s/#UseDNS yes/UseDNS no/g" /etc/ssh/sshd_config' \
+        --run-command 'mkdir -p /root/.ssh' \
+        --upload authorized_keys:/root/.ssh \
+        --run-command 'chmod 600 /root/.ssh/authorized_keys' \
+        --upload ifcfg-eth0:/etc/sysconfig/network-scripts \
+        --upload ifcfg-eth1:/etc/sysconfig/network-scripts \
+        --run-command 'yum remove -y cloud-init' \
+        --run-command 'systemctl disable chronyd' \
+        --selinux-relabel
+
+    clean_config
+}
+
+cmd_define()
 {
     idx=$1
     for role in $role_list; do
-        if [ $role == "control" ]; then
-            vm=controller-$idx
-        else
-            vm=$role-$idx
-        fi
+        name=$role-$idx
+        vm_on_volume $name
+        #vm_on_disk $name
+    done
+}
+
+cmd_create()
+{
+    name=$1
+
+    create_volume $name ${disk[$name]}
+    virt-resize $img_file_redhat /dev/lv/$name --expand /dev/sda1
+    customize_redhat $name
+
+    virt-install --connect qemu:///system --virt-type kvm \
+        --name $name --vcpus ${cpu[$name]} --ram ${memory[$name]} \
+        --disk bus=virtio,vol=lv/$name,cache=none \
+        -w bridge=br0,model=virtio \
+        -w bridge=br1,model=virtio \
+        --graphics vnc,listen=0.0.0.0 --noautoconsole \
+        --boot hd
+}
+
+cmd_delete()
+{
+    #name=$1
+    #virsh destroy $name
+    #virsh undefine $name
+    #virsh vol-delete $name lv
+    idx=$1
+    for role in $role_list; do
+        vm=$role-$idx
         virsh destroy $vm
         virsh undefine $vm
         virsh vol-delete $vm lv
@@ -48,20 +228,46 @@ delete_vm()
 
 help()
 {
-    echo "$0 [create | delete] [1 2 3]"
+  echo "help"
+  echo "$0 define [0 1 2]"
+  echo "$0 create <name>"
+  echo "    For example"
+  echo "    $0 create undercloud"
+  echo "$0 delete [0 1 2]"
 }
 
-if [ -z $2 ]; then
-    help
-else
-    if [ $1 == "create" ]; then
-        create_vm $2
-    elif [ $1 == "delete" ]; then
-        delete_vm $2
-    else
-        help
-    fi
-fi
+main()
+{
+    while [ "$1" != "" ]
+    do
+        case $1 in
+            -h | --help)
+                help
+                exit 0
+                ;;
+            define)
+                shift
+                cmd_create "$@"
+                exit 0
+                ;;
+            create)
+                shift
+                cmd_create "$@"
+                exit 0
+                ;;
+            delete)
+                shift
+                cmd_delete "$@"
+                exit 0
+                ;;
+            *)
+                echo "ERROR: unknown command \"$1\""
+                ;;
+        esac
+        shift
+    done
+}
 
+main "$@"
 exit 0
 
