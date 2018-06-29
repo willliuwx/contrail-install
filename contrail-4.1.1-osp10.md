@@ -182,6 +182,18 @@ Copy and update undercloud.conf.
 ```
 cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf
 ```
+```
+[DEFAULT]
+local_ip = 172.16.0.10/24
+network_gateway = 172.16.0.254
+undercloud_admin_vip = 172.16.0.251
+local_interface = eth1
+network_cidr = 172.16.0.0/24
+masquerade_network = 172.16.0.0/24
+dhcp_start = 172.16.0.20
+dhcp_end = 172.16.0.50
+inspection_iprange = 172.16.0.100,172.16.0.150
+```
 
 #### Install undercloud
 ```
@@ -253,12 +265,16 @@ cp -r /usr/share/contrail-tripleo-heat-templates/puppet/services/network/* \
 
 Run `virt-install` on each controller host to define VM. See script [overcloud-vm](rhosp/overcloud-vm) and [vm](rhosp/vm).
 
+Note, update script to make sure VM interface is on the right bridge.
+
 
 ## 5.2 Import nodes
 
 Import all defined VMs and compute nodes into ironic service.
 
 See script [create-node-json](rhosp/create-node-json) and [node](rhosp/node).
+
+Note, update script to make sure the right bridge is specified to get MAC address, and the private key is correct.
 
 
 # 6 Customize environments
