@@ -400,24 +400,8 @@ virt-customize \
   --run-command 'yum clean all' \
   --run-command 'rm -rf /etc/yum.repos.d/contrail.repo' \
   --run-command 'subscription-manager unregister' \
-  --run-command 'echo "vm.nr_hugepages = 64000" >> /etc/sysctl.conf' \
-  --run-command 'echo "vm.max_map_count = 128960" >> /etc/sysctl.conf' \
   --selinux-relabel
 ```
-When the script in `install_vrouter_kmod.yaml` set hugepage and start `supervisor-vrouter`, `vrouter-dpdk` failed with "ixgbe_alloc_rx_queue_mbufs(): RX mbuf alloc failed queue_id=2". Restarting `supervisor-vrouter` afterwards makes it work. To workaround this issue, pre-set hugepage in the image.
-
-contrail.repo
-```
-[Contrail]
-name=Contrail Repo
-baseurl=http://<undercloud>/contrail
-enabled=1
-gpgcheck=0
-protect=1
-metadata_expire=30
-```
-The undercloud is the address reachable from hypervisor on underlay.
-
 
 #### Enable execution bit and run it.
 ```
