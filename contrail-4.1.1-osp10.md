@@ -454,6 +454,11 @@ openstack overcloud deploy \
   -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
 ```
 
+With DPDK node, `vrouter-dpdk` failed when it was started by the script in `install_vrouter_kmod.yaml`. The error is "PMD: ixgbe_alloc_rx_queue_mbufs(): RX mbuf alloc failed queue_id=2". To work around it, need to watch DPDK node during deployment, once `vrouter-dpdk` was started, manually restart it.
+
+After initial deployment, some services may report alarms, like vrouter interface down, contrail-named failure, vrouter node down, etc. Restarting according service will bring it to good state.
+
+
 # 8 Troubleshoot
 
 List stack failures and details.
