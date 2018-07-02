@@ -18,11 +18,10 @@ The controller has the same networking configuration as other overcloud controll
 
 # 3 Install
 
-#### Register and enable repos.
+#### Register and enable repos on all nodes.
 ```
 subscription-manager register
-subscription-manager list --available --all --matches="*OpenStack*"
-subscription-manager attach --pool=<pool ID>
+subscription-manager attach --auto
 subscription-manager repos --disable=*
 subscription-manager repos \
     --enable=rhel-7-server-rpms \
@@ -32,9 +31,7 @@ subscription-manager repos \
 yum repolist
 ```
 
-#### Install Ansible
-The Ansible version has to be 2.3. `python-pip` is required to install Ansible.
-
+#### Install pip on all nodes.
 Enable EPEL to install python-pip.
 ```
 yum install -y python-devel
@@ -42,13 +39,23 @@ yum install -y \
     https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 yum repolist
 yum install -y python-pip
-yum groupinstall 'Development Tools'
+```
+
+#### Install Ansible on builder
+This is only required on the builder. The Ansible version has to be 2.3. `python-pip` is required to install Ansible.
+
+```
+yum groupinstall -y 'Development Tools'
 pip install ansible==2.3
 ```
 
 #### Prepare compute node
-Give the RHOSP 10 cluster, on compute node, EPEL repo is already enabled and python-pip is already installed. Only need to install `virtualenv` package.
+Install `pip` and `virtualenv` on all compute nodes.
 ```
+yum install -y \
+    https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum repolist
+yum install -y python-pip
 pip install virtualenv
 ```
 
@@ -87,7 +94,7 @@ cd appformix-2.16.5
 mkdir inventory
 ```
 
-inventory/hosts
+inventory/hosts for single node
 ```
 [compute]
 10.0.0.30 ansible_ssh_user=heat-admin
@@ -98,6 +105,21 @@ inventory/hosts
 
 [openstack_controller]
 10.0.0.20 ansible_ssh_user=heat-admin
+```
+
+inventory/hosts for multiple nodes
+```
+[compute]
+172.16.10.31 ansible_ssh_user=heat-admin
+172.16.10.32 ansible_ssh_user=heat-admin
+
+[appformix_controller]
+172.16.10.23 ansible_ssh_user=root keepalived_vrrp_interface=eth1
+172.16.10.24 ansible_ssh_user=root keepalived_vrrp_interface=eth1
+172.16.10.25 ansible_ssh_user=root keepalived_vrrp_interface=eth1
+
+[openstack_controller]
+172.16.10.250 ansible_ssh_user=heat-admin
 ```
 
 inventory/group_vars/all
@@ -118,6 +140,9 @@ appformix_plugins: '{{ appformix_contrail_factory_plugins }} + {{ appformix_netw
 appformix_network_device_monitoring_enabled: true
 appformix_remote_host_monitoring_enabled: true
 appformix_jti_network_device_monitoring_enabled: true
+
+# For multiple nodes.
+appformix_vip: 10.87.65.59
 ```
 
 #### SSH key
@@ -147,10 +172,18 @@ ansible -i inventory -m ping all
 ```
 
 #### Run playbook
+Single-node deployment.
 ```
 source openrc
 cd appformix-2.16.5
 ansible-playbook -i inventory appformix_openstack.yml 
+```
+
+Multi-node deployment.
+```
+source openrc
+cd appformix-2.16.5
+ansible-playbook -i inventory appformix_openstack_ha.yml
 ```
 
 
@@ -158,11 +191,6 @@ ansible-playbook -i inventory appformix_openstack.yml
 
 Open AppFormix web UI, http://<controller address>:9000, to initialize.
 
-Run `docker ps` on the controller to get the port of each AppFormix service.
-
-* dashboard: 9000
-* openstack_adapter: 7500
-* controller: 7000
-* datamanager: 8090
-
+* Upload license file.
+* Choose "Skip Installation"
 
