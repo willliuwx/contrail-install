@@ -9,7 +9,7 @@ This guide is to build a cluster of RHOSP 10 and Contrail 4.1.1 on 7 physical se
 ## 2.1 Physical server
 
 * 3 controller hypervisors for hosting undercloud VM and overcloud controller VMs.
-* 4 compute nodes, 2 with kernel based Contrail vrouter and 2 with DPDP based.
+* 4 compute nodes, 2 with kernel based Contrail vrouter and 2 with DPDK based.
 
 
 ## 2.2 VM
@@ -20,24 +20,24 @@ On each controller hypervisor, there are 4 overcloud controller VMs.
 * openstack-controller
 * contrail-controller
 * contrail-analytics
-* contrail-analytics-database
+* contrail-analytics-db
 
 Here is the VM spec for poc/lab purpose. For production, the best practise has to be followed.
 ```
-openstack-controller          64GB   6    100GB
-contrail-controller           48GB   6    100GB
-contrail-analytics            48GB   6    100GB
-contrail-analytics-database   48GB   4    100GB
-appformix-controller          32GB   4    100GB
+openstack-controller    48GB   6    120GB
+contrail-controller     48GB   6    120GB
+contrail-analytics      48GB   6    120GB
+contrail-analytics-db   48GB   4    120GB
+appformix-controller    32GB   4    120GB
 ----------------------------------------------------
-                             240GB  24   500GB
+                       224GB  24   600GB
 ```
 Note, AppFormix controller VM will be built separately.
 
 
 ## 2.3 Network
 
-Network space is determined by deployment size. The minimum prefix length of each network is 26.
+Network space is determined by deployment size. Given 12 VMs and 4 BMs, the minimum space of each network is 64, prefix length is 26.
 
 * external-api
 
@@ -57,7 +57,11 @@ Network space is determined by deployment size. The minimum prefix length of eac
 
 * storage
 
+  This is used by storage service, like Swift, which provides backend to Glance.
+
 * storage-management
+
+  This is used by storage service, like Swift, which provides backend to Glance.
 
 * management
 
@@ -68,36 +72,36 @@ Network space is determined by deployment size. The minimum prefix length of eac
 
 ### 2.4.1 Production
 
-For bandwidth isolation in production, it's recommended to have 3 separated interfaces (bond is prefered) for internal-api, tenant and storage. All other networks can be on the same interface. Here is an example.
+For bandwidth isolation in production, on compute node, it's recommended to have separated interfaces (bond is prefered) for internal-api, tenant and storage. All other networks can be on the same interface. Here is an example.
 
 Controller hypervisor
 ```
 br0 on eno1  -> provisiong
-vlan10@br0   -> external-api
-vlan20@br0   -> storage-management
-br1 on bond0 -> internal-api
-br2 on bond1 -> tenant
-br3 on bond2 -> storage
+vlan10@br0   -> internal-api
+vlan20@br0   -> external-api
+vlan30@br0   -> storage-management
+br1 on bond1 -> tenant
+br2 on bond2 -> storage
 ```
 
 Overcloud VM
 ```
 eth0        -> privisioning
-vlan10@eth0 -> external-api
-vlan20@eth0 -> storage-management
-eth1        -> internal-api
-eth2        -> tenant
-eth3        -> storage
+vlan10@eth0 -> internal-api
+vlan20@eth0 -> external-api
+vlan30@eth0 -> storage-management
+eth1        -> tenant
+eth2        -> storage
 ```
 
 Compute node
 ```
 eno1        -> provisiong
-vlan10@eno1 -> external-api
-vlan20@eno1 -> storage-management
-bond0       -> internal-api
-bond1       -> tenant
-bond2       -> storage
+vlan10@eno1 -> internal-api
+vlan20@eno1 -> external-api
+vlan30@eno1 -> storage-management
+bond0       -> tenant
+bond1       -> storage
 ```
 
 
