@@ -461,6 +461,7 @@ For some reason, `vrouter-dpdk` fails when it was started by the script in `inst
 ```
   OS::TripleO::AllNodes::Validation: ../../ci/common/all-nodes-validation-disabled.yaml
 ```
+This will complete deployment successfully. After that, need to `systemctl restart supervisor-vrouter` on each DPDK compute node.
 
 
 # 7 Deploy overcloud
