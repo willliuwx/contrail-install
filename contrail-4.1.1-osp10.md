@@ -367,7 +367,21 @@ Static control plane address is not currently supported. Here is the [blueprint]
 Redis VIP can't be the same as the InternalApiVirtualFixedIPs. If it's not specified, it will be allocated from allocation pool. That may cause address collision with static address, in case static address and allocation pool are in the same space. To avoid conflict, two options here, 1) specify it in `ips-from-pool-all.yaml`, 2) isolate static address space and allocation pool. Here is a bug for this. [https://bugzilla.redhat.com/show_bug.cgi?id=1329756](https://bugzilla.redhat.com/show_bug.cgi?id=1329756).
 
 
-## 6.5 Build image for DPDK compute node
+## 6.5 Separation of API and data networks
+
+For purposes like security or bandwidth reservation, data traffic (tunnel, BGP, XMPP and DNS) needs to be on separated network than API traffic. In this case, data traffic will be moved onto `tenant` network from `internal-api` network.
+
+Update `tripleo-heat-templates/environments/contrail/contrail-services.yaml` to set the followings.
+```
+parameter_defaults:
+  ServiceNetMap:
+    ContrailControlNetwork: tenant
+    ContrailVrouterNetwork: tenant
+    ContrailDpdkNetwork: tenant
+```
+
+
+## 6.6 Build image for DPDK compute node
 
 When deploy DPDK compute node, vrouter packages have to installed before configure interfaces. But, because the system was not registered at that point, vrouter packages can't be installed during deployment. A customized image based on `overcloud-full.qcow2` with pre-installed vrouter packages is required for DPDK compute node deployment.
 
@@ -441,6 +455,14 @@ openstack image set \
 ```
 
 
+## 6.7 Disable connectivity check for DPDK
+
+For some reason, `vrouter-dpdk` fails when it was started by the script in `install_vrouter_kmod.yaml`. The error is "PMD: ixgbe_alloc_rx_queue_mbufs(): RX mbuf alloc failed queue_id=2". Restarting `vrouter-dpdk` afterwards will bring it up to work. This issue will cause connectivity check fail. To work around it, need to update `tripleo-heat-templates/environments/contrail/contrail-services.yaml` to disable connectivity check.
+```
+  OS::TripleO::AllNodes::Validation: ../../ci/common/all-nodes-validation-disabled.yaml
+```
+
+
 # 7 Deploy overcloud
 
 ```
@@ -457,8 +479,6 @@ openstack overcloud deploy \
   -e $templates/extraconfig/pre_deploy/rhel-registration/environment-rhel-registration.yaml \
   -e $templates/extraconfig/pre_deploy/rhel-registration/rhel-registration-resource-registry.yaml
 ```
-
-With DPDK node, `vrouter-dpdk` failed when it was started by the script in `install_vrouter_kmod.yaml`. The error is "PMD: ixgbe_alloc_rx_queue_mbufs(): RX mbuf alloc failed queue_id=2". To work around it, need to watch DPDK node during deployment, once `vrouter-dpdk` was started, manually restart it.
 
 After initial deployment, some services may report alarms, like vrouter interface down, contrail-named failure, vrouter node down, etc. Restarting according service will bring it to good state.
 
