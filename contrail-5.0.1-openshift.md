@@ -97,7 +97,7 @@ Once container images are released, they will be available on hub.juniper.net/co
 
 After pull images from public registry or load from file, tag images and push them to private registry.
 
-Here is an example to build registry from imgage file using script [registry](#b1-registry). Copy image files to `image` directory and run the script.
+Here is an example to build registry from imgage file using script [registry](#b1-script-registry). Copy image files to `image` directory and run the script.
 ```
 registry build-from-file
 ```
