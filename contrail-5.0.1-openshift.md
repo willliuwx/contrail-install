@@ -133,13 +133,13 @@ ansible-playbook -i inventory/<inventory> playbooks/deploy_cluster.yml
 
 ## 3.4 Post-deployment
 
-#### 1 DNS on master
+#### DNS on master
 Right after playbook was completed, `dnsmasq` doesn't work properly on master. External name can't be resolved. Need to restart it to make it work.
 ```
 systemctl restart dnsmasq
 ```
 
-#### 2 NTP service
+#### NTP service
 Install and enable NTP service on all hosts.
 ```
 yum install -y ntp
@@ -152,13 +152,13 @@ In case NTP package is already installed, for some reason, deployment crashed NT
 systemctl restart ntpd
 ```
 
-#### 3 Coredump pattern
+#### Coredump pattern
 Set coredump pattern on all nodes (not master). This is required by `nodemgr` to detect coredump.
 ```
 echo "/var/crashes/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
 ```
 
-#### 4 alarm-gen
+#### alarm-gen
 Due to some bug, alarm-gen service doesn't start. To fix it, on each master, login to alarm-gen container with Docker. Update /lib/python2.7/site-packages/kafka/vendor/selectors34.py. Then restart the container with Docker.
 ```
 @@ -331,7 +331,7 @@
@@ -172,7 +172,7 @@ Due to some bug, alarm-gen service doesn't start. To fix it, on each master, log
          timeout = None if timeout is None else max(timeout, 0)
 ```
 
-#### 5 Default floating IP pool
+#### Default floating IP pool
 Make sure the default FIP pool exist in Contrail.
 
 Configure default FIP pool for kube-manager.
@@ -192,7 +192,7 @@ id=$(docker ps | awk "/k8s_contrail-kube-manager/"'{print $1}'); \
     docker rm $id
 ```
 
-#### 6 OpenShift authentication
+#### OpenShift authentication
 Create user `admin` and password.
 ```
 oc adm policy add-cluster-role-to-user cluster-admin admin
@@ -200,7 +200,13 @@ htpasswd -bc /etc/origin/master/htpasswd admin contrail123
 ```
 In case of HA, this has to be done on all masters.
 
-#### 7 OpenShift web console
+#### Ingress/External IP address
+When create a `LoadBalancer` type of service, OpenShift will allocate external IP address by default from 172.46.0.0/16. With Contrail, the external address (VIP of loadbalancer) will be allocated from the default floating IP pool configured for kube-manager, or from user specified floating IP pool. To disable OpenShift allocating external address, add this line to `networkConfig` section in `/etc/origin/master/master-config.yaml` and restart `atomic-openshift-master-api` service.
+```
+ingressIPNetworkCIDR: 0.0.0.0/32
+```
+
+#### OpenShift web console
 Update service type to `NodePort` on port 30443.
 ```
 oc edit service webconsole -n openshift-web-console
@@ -246,13 +252,13 @@ Restart master service.
 systemctl restart atomic-openshift-master-api
 ```
 
-#### 8 Firewall rule for NodePort
+#### Firewall rule for NodePort
 Due to the issue [https://github.com/kubernetes/kubernetes/issues/39823](https://github.com/kubernetes/kubernetes/issues/39823), which is fixed by the pull [https://github.com/kubernetes/kubernetes/pull/52569](https://github.com/kubernetes/kubernetes/pull/52569), the quick workaround is to add a rule on all nodes.
 ```
 iptables -I FORWARD 2 -j ACCEPT
 ```
 
-#### 9 Firewall rule for DNS
+#### Firewall rule for DNS
 DNS server in pod is set to local node host address. DNS request from pod inside is sent to vrouter who passes to the node host. On each node, firewall rule is required to allow such traffic.
 ```
 iptables -I INPUT 4 -j ACCEPT -p udp --dport 53
