@@ -267,15 +267,15 @@ iptables -I INPUT 4 -j ACCEPT -p udp --dport 53
 
 # 4 Validate
 
-#### 1 Contrail web UI
+#### Contrail web UI
 Use browser open `https://<master>:8143`. User name is `admin`. Password is `contrail123`. This is the default password.
 
 
-#### 2 OpenShift web console
+#### OpenShift web console
 Use browser open `https://<infra node>:30443`. User name is `admin`. Password is whatever set by `htpasswd`.
 
 
-#### 3 Unisolated project
+#### Unisolated project
 ```
 apiVersion: v1
 kind: Namespace
@@ -285,7 +285,7 @@ metadata:
 Check Contrail for the new project.
 
 
-#### 4 Isolated project
+#### Isolated project
 ```
 apiVersion: v1
 kind: Namespace
@@ -298,7 +298,7 @@ metadata:
 Check Contrail for the new project and virtual network.
 
 
-#### 5 User pod
+#### User pod
 ```
 apiVersion: v1
 kind: Pod
@@ -313,7 +313,7 @@ spec:
 Login the pod, check networking.
 
 
-#### 6 Replication controller
+#### Replication controller
 
 Pod `nginx` needs permission to set GID. Otherwise, "oc logs" shows error message.
 ```
@@ -348,7 +348,7 @@ spec:
 Check pod.
 
 
-#### 7 Service with ClusterIP
+#### Service with ClusterIP
 
 `ClusterIP` is the default type of service.
 ```
@@ -372,7 +372,7 @@ Check service name `web.demo.svc.cluster.local` resolving on both all master hos
 Check connectivity to service by either name or cluster address from user pod.
 
 
-#### 8 Service with LoadBalancer
+#### Service with LoadBalancer
 ```
 kind: Service
 apiVersion: v1
@@ -410,7 +410,7 @@ spec:
 ```
 
 
-#### 9 Service with NodePort
+#### Service with NodePort
 ```
 kind: Service
 apiVersion: v1
