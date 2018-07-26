@@ -36,25 +36,41 @@ yum install ansible
 ```
 
 
-
 ## 2.3 Playbook
 
-Get contrail-ansible-deployer-5.0.0-0.40.tgz from Juniper.
+Install `git`. Contrail playbook uses `git` to get OpenStack Kolla playbook.
+```
+yum install git
+```
 
-Apply the following Playbook patches.
-* https://review.opencontrail.org/#/c/42997/
-* https://review.opencontrail.org/#/c/42993/
+Get contrail-ansible-deployer-5.0.0-1.40.tgz from Juniper.
+```
+tar xzf contrail-ansible-deployer-5.0.0-1.40.tgz
+```
 
 
 ## 2.4 Registry
 
 
-# CentOS 7
+# 3 Deploy
 
-CentOS Linux release 7.4.1708 (Core) 
-3.10.0-693.5.2.el7.x86_64
+## 3.1 instances.yaml
 
-compute node kernel: 3.10.0-693.21.1.el7.x86_64
+## 3.2 Pre-deployment
+For CentOS, kernel on compute node has to be 3.10.0-693.21.1.el7.x86_64.
+
+## 3.3 Run playbook
+```
+cd contrail-ansible-deployer
+#ansible-playbook -i inventory/ \
+#    playbooks/provision_instances.yml
+
+ansible-playbook -i inventory/ \
+    playbooks/configure_instances.yml
+
+ansible-playbook -i inventory/ -e orchestrator=openstack \
+    playbooks/install_contrail.yml
+```
 
 
 # Ubuntu
@@ -69,22 +85,10 @@ kernel: 4.4.0-124-generic
 
 Install python (2.7) and python-pip before running playbooks.
 
-# Deploy
-```
-ansible-playbook -i inventory/ \
-    playbooks/provision_instances.yml
-
-ansible-playbook -i inventory/ \
-    playbooks/configure_instances.yml
-
-ansible-playbook -i inventory/ -e orchestrator=openstack \
-    playbooks/install_contrail.yml
-```
-
 
 # instances.yaml
 
-#### no-HA, single network
+#### non-HA, single network
 ```
 provider_config:
   bms:
@@ -135,7 +139,7 @@ kolla_config:
     keystone_admin_password: contrail123
 ```
 
-#### no-HA, management and data networks
+#### non-HA, management and data networks
 ```
 provider_config:
   bms:
@@ -187,7 +191,7 @@ kolla_config:
     keystone_admin_password: contrail123
 ```
 
-#### no-HA, management and data networks
+#### HA, management and data networks
 ```
 provider_config:
   bms:
