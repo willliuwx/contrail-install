@@ -123,8 +123,8 @@ instances:
       openstack_compute:
 global_configuration:
   CONTAINER_REGISTRY: hub.juniper.net/contrail
-  CONTAINER_REGISTRY_USERNAME: JNPR-FieldUser13
-  CONTAINER_REGISTRY_PASSWORD: qyrbAfCE46wQuTx7jc8R
+  CONTAINER_REGISTRY_USERNAME:
+  CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
   CONTRAIL_VERSION: 5.0.0-0.40-ocata
   CLOUD_ORCHESTRATOR: openstack
@@ -174,8 +174,8 @@ instances:
       openstack_compute:
 global_configuration:
   CONTAINER_REGISTRY: hub.juniper.net/contrail
-  CONTAINER_REGISTRY_USERNAME: JNPR-FieldUser13
-  CONTAINER_REGISTRY_PASSWORD: qyrbAfCE46wQuTx7jc8R
+  CONTAINER_REGISTRY_USERNAME:
+  CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
   CONTRAIL_VERSION: 5.0.0-0.40-ocata
   CLOUD_ORCHESTRATOR: openstack
@@ -274,8 +274,8 @@ instances:
       openstack_compute:
 global_configuration:
   CONTAINER_REGISTRY: hub.juniper.net/contrail
-  CONTAINER_REGISTRY_USERNAME: JNPR-FieldUser13
-  CONTAINER_REGISTRY_PASSWORD: qyrbAfCE46wQuTx7jc8R
+  CONTAINER_REGISTRY_USERNAME:
+  CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
   CONTRAIL_VERSION: 5.0.0-0.40-ocata
   CLOUD_ORCHESTRATOR: openstack
