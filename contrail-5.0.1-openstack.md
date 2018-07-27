@@ -80,11 +80,12 @@ For beta, get contrail-ansible-deployer from Github.
 ## 3.3 Run playbook
 ```
 cd contrail-ansible-deployer
-#ansible-playbook -i inventory/ \
-#    playbooks/provision_instances.yml
+
+ansible-playbook -i inventory/ -e orchestrator=openstack \
+    playbooks/configure_instances.yml
 
 ansible-playbook -i inventory/ \
-    playbooks/configure_instances.yml
+    playbooks/install_openstack.yml
 
 ansible-playbook -i inventory/ -e orchestrator=openstack \
     playbooks/install_contrail.yml
@@ -212,52 +213,40 @@ provider_config:
 instances:
   bms1:
     provider: bms
-    ip: 10.84.29.61
+    ip: 10.87.68.171
     roles:
       openstack_control:
       openstack_network:
       openstack_storage:
       openstack_monitoring:
+      config_database:
+      config:
+      control:
+      analytics_database:
+      analytics:
+      webui:
   bms2:
     provider: bms
-    ip: 10.84.29.63
+    ip: 10.87.68.172
     roles:
       openstack_control:
       openstack_network:
       openstack_storage:
       openstack_monitoring:
+      config_database:
+      config:
+      control:
+      analytics_database:
+      analytics:
+      webui:
   bms3:
     provider: bms
-    ip: 10.84.29.65
+    ip: 10.87.68.173
     roles:
       openstack_control:
       openstack_network:
       openstack_storage:
       openstack_monitoring:
-  bms4:
-    provider: bms
-    ip: 10.84.29.62
-    roles:
-      config_database:
-      config:
-      control:
-      analytics_database:
-      analytics:
-      webui:
-  bms5:
-    provider: bms
-    ip: 10.84.29.64
-    roles:
-      config_database:
-      config:
-      control:
-      analytics_database:
-      analytics:
-      webui:
-  bms6:
-    provider: bms
-    ip: 10.84.29.66
-    roles:
       config_database:
       config:
       control:
@@ -266,19 +255,7 @@ instances:
       webui:
   bms7:
     provider: bms
-    ip: 10.84.29.12
-    roles:
-      vrouter:
-      openstack_compute:
-  bms8:
-    provider: bms
-    ip: 10.84.29.13
-    roles:
-      vrouter:
-      openstack_compute:
-  bms9:
-    provider: bms
-    ip: 10.84.29.14
+    ip: 10.87.68.174
     roles:
       vrouter:
       openstack_compute:
@@ -289,15 +266,17 @@ global_configuration:
 contrail_configuration:
   CONTRAIL_VERSION: 5.0.0-0.40-ocata
   CLOUD_ORCHESTRATOR: openstack
-  VROUTER_GATEWAY: 192.168.2.254
+  CONTROLLER_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
+  CONTROL_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
+  VROUTER_GATEWAY: 172.16.0.254
   WEBUI_INSECURE_ACCESS: true
 kolla_config:
   kolla_globals:
     enable_ironic: "no"
     enable_swift: "no"
-    kolla_internal_vip_address: 192.168.2.251
-    kolla_external_vip_address: 10.84.29.251
-    contrail_api_interface_address: 192.168.2.251
+    kolla_internal_vip_address: 172.16.0.170
+    kolla_external_vip_address: 10.87.68.170
+    contrail_api_interface_address: 172.16.0.170
   kolla_passwords:
     keystone_admin_password: contrail123
 ```
