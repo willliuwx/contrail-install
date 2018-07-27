@@ -3,23 +3,6 @@
 
 Contrail 5.0.1 with OpenStack Ocata
 
-## Traffic isolation
-There are 3 types of traffic.
-* management, including SSH, SNMP, administation traffic.
-* API, including both OpenStack and Contrail API traffic, RabbitMQ, database, etc.
-* ctrl/data, including XMPP and DNS between vrouter and control node, BGP and tunnel/encapsulation traffic.
-
-For security or bandwidth reservation, traffic could be required on separated networks.
-
-#### All traffic on signle network
-Deployment will be done on management network. All traffic will be on management network as well.
-
-#### Separated management and API/ctrl/data traffic
-The easiest way is to do deployment on the API/ctrl/data network. Management work is not visible to OpenStack and Contrail. In case web UI or API needs to be accessed from management network, need to open it.
-
-#### Separated management, API and ctrl/data traffic
-Do deployment on API network and put ctrl/data traffic on ctrl/data network.
-
 
 #### CentOS
 * Controller and builder VMs are based on `CentOS-7-x86_64-GenericCloud-1805.qcow2`.
@@ -71,11 +54,36 @@ For beta, get contrail-ansible-deployer from Github.
 
 ## 3.1 instances.yaml
 
-[A.1](#a1) Run deployment on management network. All traffic is on management network.
+Tere are 3 types of traffic. For security or bandwidth reservation, traffic isolation is required to have different type of traffic on separated networks.
+* management network
 
-[A.2](#a2) Run deployment on management network. All OpenStack traffic (API, RabbitMQ, MySQL, etc.) is on management network. All Contrail traffic (API and ctrl/data) is on the ctrl/data network.
+  SSH, SNMP and administation traffic is on this network. Deployment is normally done on management network.
+
+* API network
+
+  Both OpenStack and Contrail API traffic, RabbitMQ, database, etc. is on this network.
+
+* ctrl/data
+
+  Contrail XMPP and DNS between vrouter and control node, BGP and tunnel/encapsulation traffic is on this network.
+
+
+#### 1 Signle network
+All traffic is on management network.
+
+[A.1 non-HA, single network](#a1)
+
+#### 2 Separated management and API/ctrl/data traffic
+Management is for deployment. All other cluster traffic is on data network.
+
+[A.3 HA, management and data networks](#a3)
+
+#### 3 Separated management, API and ctrl/data traffic
+
 
 ## 3.2 Pre-deployment
+
+SSH key
 
 ## 3.3 Run playbook
 ```
@@ -253,23 +261,25 @@ instances:
       analytics_database:
       analytics:
       webui:
-  bms7:
+  bms4:
     provider: bms
     ip: 10.87.68.174
     roles:
       vrouter:
       openstack_compute:
 global_configuration:
-  CONTAINER_REGISTRY: hub.juniper.net/contrail
-  CONTAINER_REGISTRY_USERNAME:
-  CONTAINER_REGISTRY_PASSWORD:
+  #CONTAINER_REGISTRY: ci-repo.englab.juniper.net:5010
+  CONTAINER_REGISTRY: 10.87.68.165:5100
+  REGISTRY_PRIVATE_INSECURE: True
+  #CONTAINER_REGISTRY: hub.juniper.net/contrail
+  #CONTAINER_REGISTRY_USERNAME:
+  #CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
-  CONTRAIL_VERSION: 5.0.0-0.40-ocata
+  CONTRAIL_VERSION: ocata-5.0-154
   CLOUD_ORCHESTRATOR: openstack
   CONTROLLER_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
   CONTROL_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
   VROUTER_GATEWAY: 172.16.0.254
-  WEBUI_INSECURE_ACCESS: true
 kolla_config:
   kolla_globals:
     enable_ironic: "no"
