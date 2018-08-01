@@ -308,6 +308,9 @@ contrail_configuration:
     roles:
       vrouter:
         TSN_EVPN_MODE: True
+contrail_configuration:
+# This is for tsn_servers in contrail-vrouter-agent.conf.
+TSN_NODES: <address 1 on data network>,<address 2 on data network>
 ```
 
 #### Set lower disk space for POC.
