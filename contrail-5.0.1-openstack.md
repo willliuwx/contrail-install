@@ -83,7 +83,8 @@ Management is for deployment. All other cluster traffic is on data network.
 
 ## 3.2 Pre-deployment
 
-SSH key
+* SSH key, "ssh-copy-id"
+* Time sync, some time zone, time difference will cause Nova hypervisor status flapping.
 
 ## 3.3 Run playbook
 ```
