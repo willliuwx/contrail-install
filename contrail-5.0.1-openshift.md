@@ -117,6 +117,40 @@ registry build-from-file
 
 Make sure all customizations in [1 Overview](#1-overview) are done prior to running playbooks.
 
+#### RHEL
+All RHEL hosts have to be registered and repos have to be enabled prior to deployment.
+
+* Register.
+```
+subscription-manager register --username <username> --password <password> --force
+```
+
+* List available subscriptions.
+```
+subscription-manager list --available --matches 'Red Hat OpenShift*'
+```
+
+* Find a pool ID from the output of previous command and attach to it.
+```
+subscription-manager attach --pool=<ID>
+```
+
+* Check yum repo and disable them if they are not required. This not required for the host based on RHEL cloud image.
+```
+yum repolist
+subscription-manager repos --disable *
+```
+
+* Enable yum repo for OpenShift Enterprise 3.9.
+```
+subscription-manager repos \
+    --enable rhel-7-server-rpms \
+    --enable rhel-7-server-extras-rpms \
+    --enable rhel-7-server-ose-3.9-rpms \
+    --enable rhel-7-fast-datapath-rpms
+```
+
+
 In case SSH key is new, copy it to all hosts in the cluster.
 ```
 ssh-copy-id root@<host>
