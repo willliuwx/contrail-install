@@ -235,7 +235,7 @@ htpasswd -bc /etc/origin/master/htpasswd admin contrail123
 In case of HA, this has to be done on all masters.
 
 #### Ingress/External IP address
-When create a `LoadBalancer` type of service, OpenShift will allocate external IP address by default from 172.46.0.0/16. With Contrail, the external address (VIP of loadbalancer) will be allocated from the default floating IP pool configured for kube-manager, or from user specified floating IP pool. To disable OpenShift allocating external address, add this line to `networkConfig` section in `/etc/origin/master/master-config.yaml` and restart `atomic-openshift-master-api` service.
+When create a `LoadBalancer` type of service, OpenShift will allocate external IP address by default from 172.46.0.0/16. With Contrail, the external address (VIP of loadbalancer) will be allocated from the default floating IP pool configured for kube-manager, or from user specified floating IP pool. To disable OpenShift allocating external address, add this line to `networkConfig` section in `/etc/origin/master/master-config.yaml` and restart `atomic-openshift-master-controllers` service.
 ```
 ingressIPNetworkCIDR: 0.0.0.0/32
 ```
