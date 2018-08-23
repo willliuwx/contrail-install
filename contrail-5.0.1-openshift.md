@@ -1,18 +1,30 @@
 
 # 1 Overview
 
-This is to deploy Contrail 5.0-122 and OpenShift Enterprise 3.9 with RHEL based Contrail containers on RHEL 7.5.
+This is to deploy OpenShift and Contrail 5.0.1-0.214.
+* OpenShift Enterprise 3.9 with RHEL 7 based Contrail containers on RHEL 7.5 host
+* OpenShift Origin 3.9 with CentOS 7 based Contrail containers on CentOS 7.5 host
+
+## 1.1 Host prerequisites
+
+#### RHEL
 
 All VMs are based on RHEL cloud image `rhel-server-7.5-x86_64-kvm.qcow2` with the following customizations.
 * Set hostname (/etc/hostname).
-* Build `/etc/hosts` with all hosts in the cluster.
 * Enable root password.
 * Disable cloud-init service.
-* Update SSH server configuration.
+* Update SSH server configuration to allow login as root.
 * Set `/root/.ssh/authorized_keys` if using existing SSH key. Or this can be done later when building the builder.
 * Configure networking.
+* Set timezone.
 * Install NTP package, and enable the service.
+* Build `/etc/hosts` with all hosts in the cluster.
 * Relabel SELinux.
+
+#### CentOS
+
+
+## 1.2 Host spec
 
 Master/Controller VM spec:
 * 6 vCPU
@@ -34,7 +46,8 @@ LB VM spec:
 
 For a clearner deployment, have a separated server as the builder to run Ansible playbook and optionally run private registry. For minimum deployment, the builder and the master can stay together on the same host.
 
-For RHEL, register system and enable repositories.
+#### RHEL
+Register system and enable repositories.
 ```
 subscription-manager register
 subscription-manager attach --auto
@@ -46,7 +59,7 @@ subscription-manager repos \
 
 ## 2.1 SSH
 
-Use existing SSH or generate new key.
+Use existing SSH key or generate new key.
 ```
 ssh-keygen
 ```
@@ -69,8 +82,9 @@ Ansible version 2.5.6-1.el7ae from repo `rhel-7-server-ansible-2.5-rpms`.
 
 ## 2.3 Playbook
 
+Download OpenShift Deployer package 5.0.1 from [Juniper site](https://www.juniper.net/support/downloads/?p=contrail#sw).
 ```
-tar xzf openshift-ansible.tgz
+tar xzf contrail-openshift-deployer-5.0.1-0.214.tgz
 ```
 
 ## 2.4 Registry
@@ -96,11 +110,6 @@ docker run -d --env REGISTRY_HTTP_ADDR=0.0.0.0:5100 \
 Once container images are released, they will be available on hub.juniper.net/contrail. For beta, need to load image from file.
 
 After pull images from public registry or load from file, tag images and push them to private registry.
-
-Here is an example to build registry from imgage file using script [registry](#b1-script-registry). Copy image files to `image` directory and run the script.
-```
-registry build-from-file
-```
 
 
 # 3 Deploy
@@ -190,20 +199,6 @@ systemctl restart ntpd
 Set coredump pattern on all nodes (not master). This is required by `nodemgr` to detect coredump.
 ```
 echo "/var/crashes/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
-```
-
-#### alarm-gen
-Due to some bug, alarm-gen service doesn't start. To fix it, on each master, login to alarm-gen container with Docker. Update /lib/python2.7/site-packages/kafka/vendor/selectors34.py. Then restart the container with Docker.
-```
-@@ -331,7 +331,7 @@
-             r, w, x = select.select(r, w, w, timeout)
-             return r, w + x, []
-     else:
--        _select = select.select
-+        _select = staticmethod(select.select)
- 
-     def select(self, timeout=None):
-         timeout = None if timeout is None else max(timeout, 0)
 ```
 
 #### Default floating IP pool
@@ -487,18 +482,20 @@ openshift_clock_enabled=true
 openshift_hosted_manage_registry=true
 openshift_hosted_manage_router=true
 openshift_enable_service_catalog=false
+openshift_web_console_install=true
+openshift_web_console_nodeselector={'region': 'infra'}
 openshift_use_openshift_sdn=false
 os_sdn_network_plugin_name='cni'
 openshift_disable_check=disk_availability,package_version,docker_storage
 
-contrail_registry=10.84.29.102:5100
-openshift_docker_insecure_registries=10.84.29.102:5100
+contrail_registry=10.87.68.165:5100
+openshift_docker_insecure_registries=10.87.68.165:5100
 #contrail_registry=hub.juniper.net/contrail
 #contrail_registry_username=
 #contrail_registry_password=
 openshift_use_contrail=true
 contrail_version=5.0
-contrail_container_tag=rhel-queens-5.0-122
+contrail_container_tag=5.0.1-0.214-rhel-queens
 vrouter_physical_interface=eth0
 vrouter_gateway=10.84.29.254
 
@@ -515,118 +512,4 @@ vrouter_gateway=10.84.29.254
 ```
 
 
-## B.1 Script `registry`
-```
-#!/bin/bash
-
-image_path=image
-
-repo=ci-repo.englab.juniper.net:5010
-
-tag=rhel-queens-5.0-122
-
-image_list="
-contrail-analytics-alarm-gen
-contrail-analytics-api
-contrail-analytics-collector
-contrail-analytics-query-engine
-contrail-analytics-snmp-collector
-contrail-analytics-topology
-contrail-controller-config-api
-contrail-controller-config-devicemgr
-contrail-controller-config-schema
-contrail-controller-config-svcmonitor
-contrail-controller-control-control
-contrail-controller-control-dns
-contrail-controller-control-named
-contrail-controller-webui-job
-contrail-controller-webui-web
-contrail-external-cassandra
-contrail-external-kafka
-contrail-external-rabbitmq
-contrail-external-zookeeper
-contrail-kubernetes-cni-init
-contrail-kubernetes-kube-manager
-contrail-node-init
-contrail-nodemgr
-contrail-vrouter-agent
-contrail-vrouter-kernel-init
-"
-
-list_registry()
-{
-    curl -s http://localhost:5100/v2/_catalog | python -m json.tool
-}
-
-list_tag()
-{
-    curl -s http://localhost:5100/v2/$1/tags/list | python -m json.tool
-}
-
-start_registry()
-{
-    docker run -d --env REGISTRY_HTTP_ADDR=0.0.0.0:5100 \
-        --restart always --net host --name registry registry:2
-}
-
-build_from_repo()
-{
-    for image in $image_list; do
-        echo "##  $image"
-        docker pull $repo/$image:$tag
-        docker tag $repo/$image:$tag $image:$tag
-        docker tag $repo/$image:$tag localhost.localdomain:5100/$image:$tag
-        docker save $image:$tag | gzip > $image_path/$image\_$tag.tgz
-        docker push localhost.localdomain:5100/$image:$tag
-        docker rmi localhost.localdomain:5100/$image:$tag
-        docker rmi $image:$tag
-        docker rmi $repo/$image:$tag
-    done
-}
-
-build_from_file()
-{
-    for image in $image_list; do
-        echo "##  $image"
-        docker load < $image_path/$image\_$tag.tgz
-        docker tag $image:$tag localhost:5100/$image:$tag
-        docker push localhost:5100/$image:$tag
-        docker rmi localhost:5100/$image:$tag
-        docker rmi $image:$tag
-    done
-}
-
-help()
-{
-    echo "Help"
-}
-
-main()
-{
-    case "$1" in
-        list)
-            list_registry
-            ;;
-        list-tag)
-            shift
-            list_tag "$@"
-            ;;
-        start)
-            start_registry
-            ;;
-        build-from-repo)
-            build_from_repo
-            ;;
-        build-from-file)
-            build_from_file
-            ;;
-        *)
-            help
-            ;;
-    esac
-}
-
-main "$@"
-exit 0
-```
 
