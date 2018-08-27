@@ -317,8 +317,8 @@ TSN_NODES: <address 1 on data network>,<address 2 on data network>
 #### Set lower disk space for POC.
 ```
 contrail_configuration:
-  CONFIG_NODEMGR__DEFAULTS__minimum_diskGB: 20
-  DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
+  CONFIG_DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
+  ANALYTICS_DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
 ```
 
 #### Set role specific variable.
