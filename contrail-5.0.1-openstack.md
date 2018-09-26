@@ -147,7 +147,7 @@ global_configuration:
   #CONTAINER_REGISTRY_USERNAME:
   #CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
-  CONTRAIL_VERSION: ocata-5.0-154
+  CONTRAIL_VERSION: 5.0.1-0.214-ocata
   CLOUD_ORCHESTRATOR: openstack
   VROUTER_GATEWAY: 10.87.68.254
 kolla_config:
@@ -197,7 +197,7 @@ global_configuration:
   CONTAINER_REGISTRY_USERNAME:
   CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
-  CONTRAIL_VERSION: 5.0.0-0.40-ocata
+  CONTRAIL_VERSION: 5.0.1-0.214-ocata
   CLOUD_ORCHESTRATOR: openstack
   CONTROLLER_NODES: 172.16.0.172
   CONTROL_NODES: 172.16.0.172
@@ -276,7 +276,7 @@ global_configuration:
   #CONTAINER_REGISTRY_USERNAME:
   #CONTAINER_REGISTRY_PASSWORD:
 contrail_configuration:
-  CONTRAIL_VERSION: ocata-5.0-154
+  CONTRAIL_VERSION: 5.0.1-0.214-ocata
   CLOUD_ORCHESTRATOR: openstack
   CONTROLLER_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
   CONTROL_NODES: 172.16.0.171,172.16.0.172,172.16.0.173
@@ -318,7 +318,7 @@ TSN_NODES: <address 1 on data network>,<address 2 on data network>
 ```
 contrail_configuration:
   CONFIG_DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
-  ANALYTICS_DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
+  DATABASE_NODEMGR__DEFAULTS__minimum_diskGB: 20
 ```
 
 #### Set role specific variable.
