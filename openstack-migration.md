@@ -16,7 +16,6 @@ Install Contrail 5.0.1 to replace OVS and migrate all workloads.
 * Install Contrail vrouter.
 * Install vrouter VIF driver.
 * Rebuild networking configurations.
-* Create port.
 * Start VM.
 
 
