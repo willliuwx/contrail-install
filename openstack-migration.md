@@ -5,6 +5,8 @@ Existing OpenStack Ocata (not deployed by Kolla) on CentOS 7.5 with tenant workl
 
 Install Contrail 5.0.1 to replace OVS and migrate all workloads.
 
+VM has to be stopped and restarted after migration.
+
 
 # 2 Workflow
 
