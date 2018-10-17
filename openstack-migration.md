@@ -1,7 +1,7 @@
 
 # 1 Overview
 
-Existing OpenStack Ocata (not deployed by Kolla) with tenant workload, like virturl networks and VMs. Networking backend is OVS.
+Existing OpenStack Ocata (not deployed by Kolla) on CentOS 7.5 with tenant workload, like virturl networks and VMs. Networking backend is OVS.
 
 Install Contrail 5.0.1 to replace OVS and migrate all workloads.
 
@@ -349,7 +349,7 @@ Start VM.
 openstack server start vm1-red
 ```
 
-It does hard-reboot, rebuilds network, invokes VIF driver who creates tap interface and plug it into vrouter.
+It does hard-reboot, rebuilds network, rebuilds libvirt instance definition, invokes VIF driver who creates tap interface and plug it into vrouter.
 
 
 
